@@ -32,12 +32,3 @@ if __name__ == '__main__':
         
     else:
         print("Não foi possível obter o endereço IP do servidor.")
-
-
-#         echo "# api-mytempo" >> README.md
-# git init
-# git add README.md
-# git commit -m "first commit"
-# git branch -M main
-# git remote add origin git@github.com:kerlonfernandes/api-mytempo.git
-# git push -u origin main
