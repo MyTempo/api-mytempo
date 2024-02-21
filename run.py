@@ -6,7 +6,7 @@ from config import *
 import socket
 
 
-def obter_endereco_ip():
+def get_local_ip_addr():
     try:
         # Cria um socket para pegar  host
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -20,24 +20,17 @@ def obter_endereco_ip():
 
 
 if __name__ == '__main__':
-    ip_servidor = obter_endereco_ip()
+    ip_servidor = get_local_ip_addr()
     if ip_servidor:
-        # data = {
-        #     "server_ip": ip_servidor,
-        #     "port": "5000"
-        # }
-        # w_json(f"{PATH_READER_DATA}/server.json", data)
+        data = {
+            "server_ip": ip_servidor,
+            "port": SERVER_PORT
+        }
+        w_json(f"{PATH_READER_DATA}/server.json", data)
         
-        app.run(host='0.0.0.0', port=5000, debug=True)
-        print(ip_servidor)
+        app.run(host='0.0.0.0', port=data["port"], debug=True)
+        
     else:
         print("Não foi possível obter o endereço IP do servidor.")
 
 
-#         echo "# api-mytempo" >> README.md
-# git init
-# git add README.md
-# git commit -m "first commit"
-# git branch -M main
-# git remote add origin git@github.com:kerlonfernandes/api-mytempo.git
-# git push -u origin main

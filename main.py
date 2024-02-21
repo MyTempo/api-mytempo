@@ -222,3 +222,6 @@ def listar_arquivos_refinados():
     f = Intern() 
     return f.listFilesDiff(type_f="refined")
 
+@app.route("/reader_status/")
+def reader_status():
+    pass
