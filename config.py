@@ -18,7 +18,7 @@ READER_CONFIG_FILE_NAME = "equip_data.json"
 READER_CONFIG_FILE_PATH = f"{PATH_READER_DATA}{READER_CONFIG_FILE_NAME}" 
 MYTEMPO_MYSQL_CONFIG = []
 TIME_FORMAT_1 = '%Y-%m-%d %H:%M:%S'
-TIME_FORMAT_2 = f"{now.year}{now.month:02}{now.day:02}{now.strftime('%H%M%S%f')[:-3]}" # 22/02/2024 - 15:04:34.946
+TIME_FORMAT_2 = f"{now.year}{now.month:02}{now.day:02}{now.strftime('%H%M%S%f')[:-3]}" 
 # txt_file_name_brute = f'MyTempo-Bruto-Sess-{Helpers.generateRandomNum(4)} T-{TIME_FORMAT_2}.txt'
 
 
