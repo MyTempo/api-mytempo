@@ -8,6 +8,9 @@ class Helpers:
     def __init__(self) -> None:
         pass
 
+    def mount_url(protocol="http", mid_of_url="", route="/"):
+        return f"{protocol}://{mid_of_url}{route}"
+    
     def is_num(n):
         if isinstance(n, (int, float)):
             return True
