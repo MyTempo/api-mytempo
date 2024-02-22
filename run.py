@@ -24,7 +24,8 @@ if __name__ == '__main__':
     if ip_servidor:
         data = {
             "server_ip": ip_servidor,
-            "port": SERVER_PORT
+            "port": SERVER_PORT,
+            "equip_port": "2022"
         }
         w_json(f"{PATH_READER_DATA}/server.json", data)
         
