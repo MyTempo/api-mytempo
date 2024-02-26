@@ -35,3 +35,30 @@ class Helpers:
     def generateRandomNum(qtd):
         random_nums = [str(random.random()) for _ in range(qtd)]
         return ', '.join(random_nums)
+    
+    def FormatDeviceParams(deviceParams, hComm=""):
+        formatted_data = {
+            "hComm": hComm,
+            "ACSADDR": deviceParams.get("ACSADDR"),
+            "ACSDATALEN": deviceParams.get("ACSDATALEN"),
+            "ANT": deviceParams.get("ANT"),
+            "BAUDRATE": deviceParams.get("BAUDRATE"),
+            "BUZZERTIME": deviceParams.get("BUZZERTIME"),
+            "CN": deviceParams.get("CN"),
+            "DEVICEARRD": deviceParams.get("DEVICEARRD"),
+            "FILTERTIME": deviceParams.get("FILTERTIME"),
+            "INTERNELTIME": deviceParams.get("INTERNELTIME"),
+            "INTERFACE": deviceParams.get("INTERFACE"),
+            "INVENTORYAREA": deviceParams.get("INVENTORYAREA"),
+            "QVALUE": deviceParams.get("QVALUE"),
+            "REGION": deviceParams.get("REGION"),
+            "RFIDPOWER": deviceParams.get("RFIDPOWER"),
+            "RFIDPRO": deviceParams.get("RFIDPRO"),
+            "SESSION": deviceParams.get("SESSION"),
+            "STEPFRE": deviceParams.get("STEPFRE"),
+            "STRATFREI": deviceParams.get("STRATFREI"),
+            "TRIGGLETIME": deviceParams.get("TRIGGLETIME"),
+            "WGSET": deviceParams.get("WGSET"),
+            "WORKMODE": deviceParams.get("WORKMODE"),
+        }
+        return formatted_data

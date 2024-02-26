@@ -116,17 +116,19 @@ class ReaderData:
         else:
             get_tag_info_thread.join()
 
+    def Start_Counting(self, deviceParams = {}):
+        startCount = Helpers.mount_url("http", f"{self.server['server_ip']}:{READER_SERVER_PORT}", "/StartCounting")
+        response = requests.post(startCount, json=deviceParams)
+        return response
 
     def Start_Reader(self):
         self.GetPorts_Reader()
         try:
             openConnUrl = Helpers.mount_url("http", f"{self.server['server_ip']}:{READER_SERVER_PORT}", "/OpenNetConnection")
             openConnResponse = requests.post(openConnUrl, data={})
-            print(openConnResponse)
             url = Helpers.mount_url("http", f"{self.server['server_ip']}:{READER_SERVER_PORT}", "/OpenNetConnection")
-            openNetConnection = requests.post(url, json=data)
-            print(openNetConnection.text)
-            
+            openNetConnection = requests.post(url, json=self.reader_data)
+    
             
             if openNetConnection.status_code == 200:
                 try:
@@ -137,21 +139,18 @@ class ReaderData:
                     self.hComm = r_data.get("hComm")
                     if self.hComm:
                         getDeviceParam = self.GetDeviceParam(hComm=self.hComm)
-                        print(getDeviceParam)
                         deviceParams = getDeviceParam.get("data")
                         if(deviceParams.get("res_code") == 1001):
-                            print(Exception)
+                            self.RetryToConnect_Reader()
                         else:
-                            
                             if deviceParams:
-                                startCount = Helpers.mount_url("http", f"{server['server_ip']}:{READER_SERVER_PORT}", "/StartCounting")
-                                response = requests.post(startCount, json=deviceParams)
+                                StartCounting = self.Start_Counting(deviceParams=Helpers.FormatDeviceParams(deviceParams=deviceParams, hComm=self.hComm))
                                 if(deviceParams.get("res_code") != 1001):
-                                    if response.status_code == 200:
+                                    if StartCounting.status_code == 200:          
                                         self.is_counting = True
                                         self.gettingTagInfo()
                                     else:
-                                        print(f"Failed to start counting. Status code: {response.status_code}")
+                                        print(f"Failed to start counting. Status code: {StartCounting.status_code}")
                 except json.JSONDecodeError:
                     print("Error decoding JSON response.")
         except Exception as e:
@@ -217,6 +216,7 @@ class ReaderData:
             print(e)
     
     
+    
 
     def stopInventory(self):
         res = dict()
@@ -264,19 +264,22 @@ class ReaderData:
 
 R = ReaderData()
 
-server = r_json(path=SERVER_CONFIG_FILE_PATH)
-data = {
-                'ip': READER_DEFAULT_IP,
-                'port': server['equip_port'],
-                'timeoutMs': 3000
-        }
+# server = r_json(path=SERVER_CONFIG_FILE_PATH)
+# data = {
+#                 'ip': READER_DEFAULT_IP,
+#                 'port': server['equip_port'],
+#                 'timeoutMs': 3000
+#         }
            
-url = Helpers.mount_url("http", f"{server['server_ip']}:{READER_SERVER_PORT}", "/OpenNetConnection")
-openNetConnection = requests.post(url, json=data)
-hComm = openNetConnection.json()
-hComm = hComm.get("data")
-hComm = hComm.get("hComm")
-deviceParams = R.GetDeviceParam(hComm)
-# print(R.)
+# url = Helpers.mount_url("http", f"{server['server_ip']}:{READER_SERVER_PORT}", "/OpenNetConnection")
+# openNetConnection = requests.post(url, json=data)
+# hComm = openNetConnection.json()
+# hComm = hComm.get("data")
+# hComm = hComm.get("hComm")
+# deviceParams = R.GetDeviceParam(hComm)
+# deviceParams = deviceParams.get("data")
+
+
+# print(R.Start_Counting(formatted_data).json())
 
 print(R.Start_Reader())
