@@ -10,6 +10,7 @@ from system import System
 from get_data import GetWebData
 from readfiles import Intern
 from helpers import Helpers
+from ReaderData import *
 
 def start_ngrok(port):
     try:
@@ -222,6 +223,17 @@ def listar_arquivos_refinados():
     f = Intern() 
     return f.listFilesDiff(type_f="refined")
 
-@app.route("/reader_status/")
+@app.route("/reader_status/", methods=['GET'])
 def reader_status():
-    pass
+    return jsonify(ReaderData.ReaderStatus())
+
+@app.route("/start_reader/", methods=['POST'])
+def start_reader():
+    Reader = ReaderData()
+    return jsonify(Reader.Start_Reader())
+
+@app.route("/stop_reader/", methods=['POST'])
+def stop_reader():
+    Reader = ReaderData()
+    return jsonify(Reader.Stop_Reader())
+

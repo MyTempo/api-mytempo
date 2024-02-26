@@ -111,7 +111,6 @@ class ReaderData:
         if(self.is_counting == True):
             get_tag_info_thread = threading.Thread(target=self.gettingTagInfo)
         if self.tag_thread == False:
-            
             get_tag_info_thread.start()
         else:
             get_tag_info_thread.join()
@@ -125,7 +124,7 @@ class ReaderData:
         self.GetPorts_Reader()
         try:
             openConnUrl = Helpers.mount_url("http", f"{self.server['server_ip']}:{READER_SERVER_PORT}", "/OpenNetConnection")
-            openConnResponse = requests.post(openConnUrl, data={})
+            requests.post(openConnUrl, data={})
             url = Helpers.mount_url("http", f"{self.server['server_ip']}:{READER_SERVER_PORT}", "/OpenNetConnection")
             openNetConnection = requests.post(url, json=self.reader_data)
     
@@ -142,6 +141,7 @@ class ReaderData:
                         deviceParams = getDeviceParam.get("data")
                         if(deviceParams.get("res_code") == 1001):
                             self.RetryToConnect_Reader()
+
                         else:
                             if deviceParams:
                                 StartCounting = self.Start_Counting(deviceParams=Helpers.FormatDeviceParams(deviceParams=deviceParams, hComm=self.hComm))
@@ -149,8 +149,21 @@ class ReaderData:
                                     if StartCounting.status_code == 200:          
                                         self.is_counting = True
                                         self.gettingTagInfo()
+                                        return {
+                                            'status': 'success',
+                                            'message': 'Sucesso ao Iniciar o processamento',
+                                            'erro': 0,
+                                            'retornomsg': "Leitor iniciado com sucesso",
+                                        }
                                     else:
-                                        print(f"Failed to start counting. Status code: {StartCounting.status_code}")
+                                        return {
+                                            'status': 'error',
+                                            'message': 'Falha ao iniciar o processamento',
+                                            'erro': 1,
+                                            'retornomsg': "Falha ao iniciar o leitor",
+                                            "status_code": StartCounting.status_code
+                                        }
+                             
                 except json.JSONDecodeError:
                     print("Error decoding JSON response.")
         except Exception as e:
@@ -164,6 +177,7 @@ class ReaderData:
             
     def RetryToConnect_Reader(self):
         import time
+        print("Tentando conectar aguarde um pouco...")
         self.closeDevice()
         time.sleep(5)
         self.Start_Reader()
@@ -260,26 +274,3 @@ class ReaderData:
             return response.json()
         except Exception as e:
             print(e)
-
-
-R = ReaderData()
-
-# server = r_json(path=SERVER_CONFIG_FILE_PATH)
-# data = {
-#                 'ip': READER_DEFAULT_IP,
-#                 'port': server['equip_port'],
-#                 'timeoutMs': 3000
-#         }
-           
-# url = Helpers.mount_url("http", f"{server['server_ip']}:{READER_SERVER_PORT}", "/OpenNetConnection")
-# openNetConnection = requests.post(url, json=data)
-# hComm = openNetConnection.json()
-# hComm = hComm.get("data")
-# hComm = hComm.get("hComm")
-# deviceParams = R.GetDeviceParam(hComm)
-# deviceParams = deviceParams.get("data")
-
-
-# print(R.Start_Counting(formatted_data).json())
-
-print(R.Start_Reader())

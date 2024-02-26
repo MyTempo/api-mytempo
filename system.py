@@ -42,5 +42,6 @@ class System:
             equip_data = json.load(arquivo)
             return equip_data
 
+
     
     
