@@ -20,7 +20,13 @@ SERVER_CONFIG_FILE_NAME = "server.json"
 READER_CONFIG_FILE_PATH = f"{PATH_READER_DATA}{READER_CONFIG_FILE_NAME}" 
 SERVER_CONFIG_FILE_PATH = f"{PATH_READER_DATA}{SERVER_CONFIG_FILE_NAME}" 
 
-MYTEMPO_MYSQL_CONFIG = []
+
+MYTEMPO_MYSQL_CONFIG = {
+    "host": "162.240.222.71",
+    "user": "mytempoesp_base",
+    "password": "6*JqY8Xfa}Hf",
+    "database": "mytempoesp_base"
+}
 TIME_FORMAT_1 = '%Y-%m-%d %H:%M:%S'
 TIME_FORMAT_2 = f"{now.year}{now.month:02}{now.day:02}{now.strftime('%H%M%S%f')[:-3]}" 
 

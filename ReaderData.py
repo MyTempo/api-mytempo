@@ -5,7 +5,8 @@ import threading
 from functions import *
 from helpers import *
 from datetime import datetime
-
+from readfiles import Intern
+import re
 
 class ReaderData:
     def __init__(self) -> None:
@@ -38,6 +39,7 @@ class ReaderData:
                 res['message'] = "A leitura está em andamento."
                 res["erro"] = 0
                 res['retornomsg'] = "O Equipamento está comunicando!"
+                res['data'] = response.json()
             else:
                 res['status'] = "error"
                 res['message'] = "Erro na requisição"
@@ -114,7 +116,59 @@ class ReaderData:
             get_tag_info_thread.start()
         else:
             get_tag_info_thread.join()
+    
+    def getFirstTagInfoThread(self):
+        FirstTagInfo = threading.Thread(target=self.getCompressedData)
+        FirstTagInfo.start()
+    
+    def getCompressedData(self):
+        r_file = Intern()
+        most_recent_file_path = r_file.getMostRecentFileModified(PATH_BRUTE_DATA)
+        
+        # with open(most_recent_file_path, 'r') as file:
+        #     lines = file.readlines()
+        
+        # unique_lines = list(dict.fromkeys(lines))
+        
+        # lines_without_letters = [line for line in unique_lines if not re.search('[a-zA-Z]', line)]
+    
+        # with open(f"{PATH_REF_DATA}/refinado.txt", 'w') as output_file:
+        #     output_file.writelines(lines_without_letters)
 
+        tempos = {}
+        
+    # Tenta abrir o arquivo e ler as linhas
+        
+
+        try:
+            r_file = Intern()
+            most_recent_file_path = r_file.getMostRecentFileModified(PATH_BRUTE_DATA)
+
+            with open(most_recent_file_path) as arq:
+                # Lê o conteúdo do arquivo como uma string e divide em linhas
+                rows = arq.read().splitlines()
+
+                # Dicionário para armazenar uma lista dos primeiros tempos para cada atleta
+                tempos = {}
+
+                # Percorre as linhas do arquivo
+                for row in rows:
+                    # Extrai o número do atleta e o tempo da linha
+                    numero_atleta = int(row[11:15])
+                    tempo_atleta = str(row[27:])
+
+                    # Adiciona o tempo do atleta à lista se não existir
+                    if numero_atleta not in tempos:
+                        tempos[numero_atleta] = [tempo_atleta]
+
+                # Imprime o dicionário resultante
+                print(tempos)
+        except Exception as e:
+            print(f"Ocorreu um erro: {str(e)}")
+
+            # Percorre o dicionário e imprime os tempos de cada atleta
+            for numero_atleta, lista_tempos in tempos.items():
+                print(f"{numero_atleta}: {lista_tempos}")
     def Start_Counting(self, deviceParams = {}):
         startCount = Helpers.mount_url("http", f"{self.server['server_ip']}:{READER_SERVER_PORT}", "/StartCounting")
         response = requests.post(startCount, json=deviceParams)
@@ -229,9 +283,6 @@ class ReaderData:
         except Exception as e:
             print(e)
     
-    
-    
-
     def stopInventory(self):
         res = dict()
         server = r_json(path=SERVER_CONFIG_FILE_PATH)
@@ -274,3 +325,7 @@ class ReaderData:
             return response.json()
         except Exception as e:
             print(e)
+
+r = ReaderData()
+
+print(r.getCompressedData())

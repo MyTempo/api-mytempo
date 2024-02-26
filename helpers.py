@@ -1,8 +1,10 @@
 import os
 import datetime
 from datetime import timezone
+from config import *
 import pytz
 import random
+
 
 class Helpers:
     def __init__(self) -> None:
@@ -62,3 +64,4 @@ class Helpers:
             "WORKMODE": deviceParams.get("WORKMODE"),
         }
         return formatted_data
+

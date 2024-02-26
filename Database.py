@@ -1,13 +1,12 @@
 import mysql.connector
-
-#ESTA CLASSE DE CONSULTAS ESTÁ EM DESENVOLVIMENTO, PODE NÃO TER TODOS OS TRATAMENTOS DE ERROS NECESSÁRIOS PARA RETORNAR AS DEVIDAS MENSAGENS PARA IDENTIFICAR OS ERROS
-
+from config import *
 class Database:
-    def __init__(self, host, user, password, database, messages=False) -> None:
-        self.host = host
-        self.user = user
-        self.password = password
-        self.database = database
+    def __init__(self, messages=False) -> None:
+
+        self.host = MYTEMPO_MYSQL_CONFIG["host"]
+        self.user = MYTEMPO_MYSQL_CONFIG["user"]
+        self.password = MYTEMPO_MYSQL_CONFIG["password"]
+        self.database = MYTEMPO_MYSQL_CONFIG["database"]
         self.messages = messages
         self.results = []
         self.info = {

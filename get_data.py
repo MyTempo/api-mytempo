@@ -54,10 +54,7 @@ class GetWebData:
                     res["erro"] = 1
                     res['retornomsg'] = "Ocorreu um erro ao Atualizar equipamento!"
                     return res
-                # 'status': '',
-                # 'message': '',
-                # 'erro': 0,
-                # 'retornomsg': ''
+ 
             else:
                 res['status'] = "error"
                 res['message'] = "Erro na requisição"
