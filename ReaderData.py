@@ -11,6 +11,19 @@ class ReaderData:
     def __init__(self) -> None:
         self.hComm = ""
         self.tag_thread = False
+        self.is_counting = False
+        self.deviceParams = {}
+
+        #Setting Configurations 
+        self.server = r_json(path=SERVER_CONFIG_FILE_PATH)
+        self.reader_data = {
+                'server_ip': self.server['server_ip'],
+                'ip': READER_DEFAULT_IP,
+                'port': self.server['equip_port'],
+                'timeoutMs': 3000
+            }
+
+
     def ReaderStatus():
        
         res = dict()
@@ -71,10 +84,10 @@ class ReaderData:
       
         res = dict()
         data = {
-            'strComPort': '',  # Substitua pela porta serial desejada
-            'Baudrate': 115200  # Substitua pela taxa de baud desejada (correspondente a 115200 no seu código)
+            'strComPort': '',  
+            'Baudrate': 115200 
         }   
-        # URL do seu aplicativo Flask
+        
         server = r_json(path=SERVER_CONFIG_FILE_PATH)
         url = Helpers.mount_url("http", f"{server['server_ip']}:{READER_SERVER_PORT}", "/OpenDevice")
         try:
@@ -83,9 +96,6 @@ class ReaderData:
         except Exception as e:
             print(e)       
 
-    def Stop_Reader(self):
-        if(self.hComm):
-            print(self.hComm)
     
     def getTagInfo(self):
         server = r_json(path=SERVER_CONFIG_FILE_PATH)
@@ -98,64 +108,75 @@ class ReaderData:
             self.getTagInfo()
 
     def getTagInfoThread(self):
-        get_tag_info_thread = threading.Thread(target=self.gettingTagInfo)
+        if(self.is_counting == True):
+            get_tag_info_thread = threading.Thread(target=self.gettingTagInfo)
         if self.tag_thread == False:
+            
             get_tag_info_thread.start()
         else:
             get_tag_info_thread.join()
-        
-    def Start_Reader(self):
-        try:
-            server = r_json(path=SERVER_CONFIG_FILE_PATH)
-            data = {
-                'ip': server['server_ip'],
-                'port': server['equip_port'],
-                'timeoutMs': 3000
-            }
-            url = Helpers.mount_url("http", f"{server['server_ip']}:{READER_SERVER_PORT}", "/OpenNetConnection")
-            openNetConnection = requests.post(url, json=data)
 
+
+    def Start_Reader(self):
+        self.GetPorts_Reader()
+        try:
+            openConnUrl = Helpers.mount_url("http", f"{self.server['server_ip']}:{READER_SERVER_PORT}", "/OpenNetConnection")
+            openConnResponse = requests.post(openConnUrl, data={})
+            print(openConnResponse)
+            url = Helpers.mount_url("http", f"{self.server['server_ip']}:{READER_SERVER_PORT}", "/OpenNetConnection")
+            openNetConnection = requests.post(url, json=data)
+            print(openNetConnection.text)
+            
+            
             if openNetConnection.status_code == 200:
                 try:
                     res_data = openNetConnection.json()
+                    self.deviceParams = res_data
+
                     r_data = res_data.get("data")
                     self.hComm = r_data.get("hComm")
                     if self.hComm:
                         getDeviceParam = self.GetDeviceParam(hComm=self.hComm)
+                        print(getDeviceParam)
                         deviceParams = getDeviceParam.get("data")
-                        print(deviceParams)
-                        print("aqui passou")
-                        if deviceParams:
-                            startCount = Helpers.mount_url("http", f"{server['server_ip']}:{READER_SERVER_PORT}", "/StartCounting")
-                            response = requests.post(startCount, json=deviceParams)
-                            print(response.text)
-                            if response.status_code == 200:
-                                print(response.text)
-                                self.gettingTagInfo()
-                            else:
-                                print(f"Failed to start counting. Status code: {response.status_code}")
+                        if(deviceParams.get("res_code") == 1001):
+                            print(Exception)
+                        else:
+                            
+                            if deviceParams:
+                                startCount = Helpers.mount_url("http", f"{server['server_ip']}:{READER_SERVER_PORT}", "/StartCounting")
+                                response = requests.post(startCount, json=deviceParams)
+                                if(deviceParams.get("res_code") != 1001):
+                                    if response.status_code == 200:
+                                        self.is_counting = True
+                                        self.gettingTagInfo()
+                                    else:
+                                        print(f"Failed to start counting. Status code: {response.status_code}")
                 except json.JSONDecodeError:
                     print("Error decoding JSON response.")
         except Exception as e:
             print(e)
             
-        # res = dict()
-        # # URL do seu aplicativo Flask
-        # server = r_json(path=SERVER_CONFIG_FILE_PATH)
-        # url = Helpers.mount_url("http", f"{server['server_ip']}:{READER_SERVER_PORT}", "/getPorts")
-        # try:
-        #     response = requests.post(url, json={})
-        #     print(response.text)
-        # except Exception as e:
-        #     print(e)
+
+    def Stop_Reader(self):
+        if(self.hComm):
+            self.stopInventory()
+            self.closeDevice()
+            
+    def RetryToConnect_Reader(self):
+        import time
+        self.closeDevice()
+        time.sleep(5)
+        self.Start_Reader()
+          
 
     def getPower_Reader():
         
         res = dict()
-        # URL do seu aplicativo Flask
+      
         data = {
-            'strComPort': '',  # Substitua pela porta serial desejada
-            'Baudrate': 115200  # Substitua pela taxa de baud desejada (correspondente a 115200 no seu código)
+            'strComPort': '',  
+            'Baudrate': 115200 
         }   
         server = r_json(path=SERVER_CONFIG_FILE_PATH)
         url = Helpers.mount_url("http", f"{server['server_ip']}:{READER_SERVER_PORT}", "/getPorts")
@@ -165,11 +186,11 @@ class ReaderData:
         except Exception as e:
             print(e)
 
-    def GetPorts_Reader():
+    def GetPorts_Reader(self):
         res = dict()
      
         server = r_json(path=SERVER_CONFIG_FILE_PATH)
-        url = Helpers.mount_url("http", f"{server['server_ip']}:{READER_SERVER_PORT}", "/getPorts")
+        url = Helpers.mount_url("http", f"{self.server['server_ip']}:{READER_SERVER_PORT}", "/getPorts")
         try:
             response = requests.post(url, data={})
             print(response.text)
@@ -181,27 +202,81 @@ class ReaderData:
      
         server = r_json(path=SERVER_CONFIG_FILE_PATH)
         url = Helpers.mount_url("http", f"{server['server_ip']}:{READER_SERVER_PORT}", "/GetDevicePara")
-        data = {
-         "hComm": hComm #teste
-        }
+        if(self.hComm):
+            data = {
+                "hComm": self.hComm 
+            }
+        else:
+            data = {
+                "hComm": hComm 
+            }
         try:
             response = requests.post(url, json=data)
             return response.json()
         except Exception as e:
             print(e)
     
-    def stopInventory(self, hComm=""):
+    
+
+    def stopInventory(self):
         res = dict()
-     
         server = r_json(path=SERVER_CONFIG_FILE_PATH)
+        data = {
+                'ip': server['server_ip'],
+                'port': server['equip_port'],
+                'timeoutMs': 3000
+                }
+            
+        url_openConn = Helpers.mount_url("http", f"{server['server_ip']}:{READER_SERVER_PORT}", "/OpenNetConnection")
+        openNetConnection = requests.post(url_openConn, json=data)
+        if openNetConnection.status_code == 200:
+            res_data = openNetConnection.json()
+            r_data = res_data.get("data")
+            self.hComm = r_data.get("hComm")
         url = Helpers.mount_url("http", f"{server['server_ip']}:{READER_SERVER_PORT}", "/InventoryStop")
         data = {
-         "hComm": hComm #teste
+         "hComm": self.hComm, 
+         "timeout": 10000
+        }
+        try:
+            response = requests.post(url, json=data)
+            print(response.text)
+            return response.json()
+        except Exception as e:
+            print(e)
+
+    def closeDevice(self):
+        server = r_json(path=SERVER_CONFIG_FILE_PATH)
+        data = {
+            'ip': server['server_ip'],
+            'port': server['equip_port'],
+            }
+        url = Helpers.mount_url("http", f"{server['server_ip']}:{READER_SERVER_PORT}", "/CloseDevice")
+        data = {
+         "hComm": self.hComm, 
         }
         try:
             response = requests.post(url, json=data)
             return response.json()
         except Exception as e:
             print(e)
+
+
 R = ReaderData()
+
+server = r_json(path=SERVER_CONFIG_FILE_PATH)
+data = {
+                'ip': READER_DEFAULT_IP,
+                'port': server['equip_port'],
+                'timeoutMs': 3000
+        }
+           
+url = Helpers.mount_url("http", f"{server['server_ip']}:{READER_SERVER_PORT}", "/OpenNetConnection")
+openNetConnection = requests.post(url, json=data)
+hComm = openNetConnection.json()
+hComm = hComm.get("data")
+hComm = hComm.get("hComm")
+deviceParams = R.GetDeviceParam(hComm)
+# print(R.)
+
 print(R.Start_Reader())

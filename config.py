@@ -31,4 +31,23 @@ READER_SERVER_PORT = "5000"
 PROTOCOL1 = "http://"
 PROTOCOL2 = "https://"
 
+# default reader settings
+READER_DEFAULT_IP = "192.168.1.200"
+
 URL_DADOS_EQUIPAMENTO = "http://api.mytempo.esp.br/api/v1/DadosEquipamento.php"
+
+def DebugS(s, name=""):
+    os.system('cls')
+    if(name != ""):
+        print("-" * 30)
+        print(f"Output name | {name} |")
+        print("\nOutput:")
+        print("-> ", s)
+        print("\n")
+        print("-" * 30)
+    else:
+        print("-" * 30)
+        print("\n")
+        print(s)
+        print("\n")
+        print("-" * 30)
