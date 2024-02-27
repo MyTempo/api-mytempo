@@ -1,7 +1,5 @@
 import os
-import datetime
-from datetime import timezone
-from datetime import datetime
+from datetime import datetime, timezone
 
 # config vars
 now = datetime.now()
@@ -33,13 +31,14 @@ TIME_FORMAT_2 = f"{now.year}{now.month:02}{now.day:02}{now.strftime('%H%M%S%f')[
 # Server configurations
 SERVER_PORT = "3000"
 READER_SERVER_PORT = "5000"
+
 # APIs
 PROTOCOL1 = "http://"
 PROTOCOL2 = "https://"
 
 # default reader settings
 READER_DEFAULT_IP = "192.168.1.200"
-
+EQUIP_PORT = "2022"
 URL_DADOS_EQUIPAMENTO = "http://api.mytempo.esp.br/api/v1/DadosEquipamento.php"
 
 def DebugS(s, name=""):

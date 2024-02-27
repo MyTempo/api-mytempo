@@ -12,40 +12,14 @@ from readfiles import Intern
 from helpers import Helpers
 from ReaderData import *
 
-def start_ngrok(port):
-    try:
-        
-        ngrok_process = subprocess.Popen(['ngrok', 'http', str(port)])
-
-        time.sleep(5)
-
-        response = requests.get('http://127.0.0.1:4040/api/tunnels')
-        data = json.loads(response.text)
-
-        public_url = data['tunnels'][0]['public_url']
-
-        return public_url
-
-    except Exception as e:
-        print(f"Erro ao iniciar o Ngrok: {e}")
-        return None
-
-
 
 app = Flask(__name__)
 CORS(app)  # Configurações do CORS
 
 @app.route('/')
 def obter_ip_exposto():
-    # Tenta pegar o endereço IP do cabeçalho X-Forwarded-For
-    ip_exposto = request.headers.get('X-Forwarded-For')
-
-    if ip_exposto:
-        ip_exposto = ip_exposto.split(',')[0].strip()
-    else:
-        ip_exposto = request.remote_addr
-
-    return f'O endereço IP exposto é: {ip_exposto}'
+   
+    return jsonify({"Working!": "True"})
 
 @app.route('/status', methods=['GET'])
 def status_equip():
@@ -65,6 +39,40 @@ def atualiza_equipamento():
         return jsonify(result), 200  
     else:
         return jsonify(result), 500
+
+@app.route("/configurar/equipamento/", methods=["POST"])
+def configurar_equipamento():
+    if request.method == "POST":
+        equip_data = request.json
+        if(equip_data): 
+            equip_name = equip_data.get("nome_equipamento")
+            if(equip_name):
+               equip_name = equip_data.get("nome_equipamento")
+               dados_request = {
+                   "nome_equipamento": equip_name
+               }
+               response = requests.post(URL_DADOS_EQUIPAMENTO, json=dados_request)
+               dados = response.json()[0]
+               gwt = GetWebData()
+               gwt.config_equip(dados)   
+               return jsonify({
+                'data': dados,
+                'status': 'success',
+                'message': 'Sucesso ao configurar equipamento',
+                'erro': 0,
+                'retornomsg': "Equipamento configurado com sucesso!",
+                })
+            
+            else:
+                return jsonify({
+                    "Message": "Parâmetros não passados corretamente."
+                })
+            # response = requests.post(URL_DADOS_EQUIPAMENTO, json={
+            #     "nome_equipamento": equip_name
+            # })
+            
+            # return response
+            
 
 @app.route("/verifica_coleta")
 def verificar_coleta():
@@ -221,7 +229,8 @@ def listar_arquivos_brutos():
 @app.route("/listar_arquivos/refinados/", methods=['POST', 'GET'])
 def listar_arquivos_refinados():
     f = Intern() 
-    return f.listFilesDiff(type_f="refined")
+    files = f.listFilesDiff(type_f="refined")
+    return jsonify(files)
 
 @app.route("/reader_status/", methods=['GET'])
 def reader_status():

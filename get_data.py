@@ -73,3 +73,22 @@ class GetWebData:
         return res
 
 
+    def config_equip(self, data):
+        dados = {}
+
+        dados["data_prova"] = data.get("dataprova")
+        dados["descricao_check"] = data.get("descricao_check")
+        dados["equipamento"] = data.get("equipamento")
+        dados["fabricante"] = data.get("fabricante")
+        dados["hora"] = data.get("hora")
+        dados["idcheck"] = data.get("idcheck")
+        dados["identificacao"] = data.get("identificacao")
+        dados["idprova"] = data.get("idprova")
+        dados["last_update"] = self.current_time
+        dados["modelo"] = data.get("modelo")
+        dados["serie"] = data.get("serie")
+        dados["status"] = data.get("status")
+        dados["tituloprova"] = data.get("tituloprova")
+        with open(READER_CONFIG_FILE_PATH, 'w') as arquivo:
+            json.dump(dados, arquivo, indent=4)
+

@@ -2,42 +2,25 @@ from config import *
 from functions import *
 from helpers import *
 from datetime import datetime
-import sqlite3
-
+from Database import *
+import os
 class MyTempo:
     
     def __init__(self) -> None:
         pass
 
-    def getFirstTime(self, tempo_prova):
-        conn = sqlite3.connect('equipamentos.db')
-        cursor = conn.cursor()
-        query = """ CREATE TABLE IF NOT EXISTS tempos_first (
-                    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-                    atleta TEXT,
-                    tempo TEXT
-                );"""
-        cursor.execute(query)
-        print('Tabela criada com sucesso!')
-
-        lista = []
-        tempos = self.readFiles()
-        print(tempos)
-        for numero_atleta, lista_tempos in tempos.items():
-            for tempo in lista_tempos:
-                cursor.execute("INSERT INTO tempos_first (atleta, tempo) VALUES (?, ?)",
-                                (numero_atleta, tempo))
-
-        query = cursor.execute(f"""
-                                SELECT atleta, MIN(tempo) AS menor_tempo
-                                FROM tempos_first
-                                WHERE TIME(tempo) >= TIME('{tempo_prova}')
-                                GROUP BY atleta;
-                               """)
-        rows = cursor.fetchall()
-        cursor.execute('DROP TABLE tempos_first')
-        print("Tabela apagada com sucesso!")
-        conn.close()
-        for temps in rows:
-            self.primeiros_tempos_minerados.append(temps)
-        return self.primeiros_tempos_minerados
+    def setIp(self, ip, port):
+        if os.path.exists(SERVER_CONFIG_FILE_PATH):
+            try:
+                if os.path.exists(READER_CONFIG_FILE_PATH):
+                    equip_dados = r_json(READER_CONFIG_FILE_PATH)
+                    if(ip and port):
+                        db = Database()
+                        update = f"UPDATE `equipamentos_cadastro` SET `ip` = '{ip}:{port}' WHERE `equipamentos_cadastro`.`id` = {equip_dados["equipamento"]} "
+                        result = db.executeNonQuery(update)
+                        if result['status'] == "success":
+                            return "Equipamento iniciado e configurado com sucesso!"
+            except FileNotFoundError as e:
+                print("Falha ao configurar servidor remoto: -> ", e)
+        
+    

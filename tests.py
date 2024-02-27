@@ -1,8 +1,19 @@
-from datetime import datetime
+from get_data import *
 
 
-now = datetime.now()
+import requests
 
-formatted_timestamp = f"{now.day:02}/{now.month:02}/{now.year} - {now.strftime('%H:%M:%S.%f')[:-3]}"
-# 22/02/2024 - 15:04:34.946
-print("Timestamp formatado:", formatted_timestamp)
+gwt = GetWebData()
+url = "http://192.168.1.115:3000/configurar/equipamento/"
+
+headers = {
+    "Content-Type": "application/json"
+}
+
+data = {
+    "nome_equipamento": "PORTAL LEITOR RFID298"
+}
+
+response = requests.post(url, json=data)
+
+print(response.json())

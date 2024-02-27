@@ -1,8 +1,6 @@
 from config import *
 import os
 import re
-import os
-from datetime import datetime, timezone
 from helpers import Helpers
 
 class Intern:
@@ -18,8 +16,6 @@ class Intern:
         elif type_f == 1:
             file_type = PATH_BRUTE_DATA
            
-
-
         if session_file != "":
             self.arquivo_process = self.searchFileBySession(file_session=session_file, type_f=file_type)
         elif session_file == "":
@@ -80,24 +76,28 @@ class Intern:
             for arquivo in arquivos:
                 caminho_completo = os.path.join(diretorio, arquivo)
                 estatisticas_arquivo = os.stat(caminho_completo)
+                timestamp_modificacao = estatisticas_arquivo.st_mtime
+                data_modificacao = datetime.fromtimestamp(timestamp_modificacao, timezone.utc)                
+                data_modificacao_formatada = data_modificacao.strftime(TIME_FORMAT_1)
 
                 with open(caminho_completo) as arq:
                     linhas = arq.readlines()
                     numero_linhas = len(linhas)
 
                     for linha in linhas:
-                        atleta = linha[14:18]
+                        atleta = linha[23:27]
                         atletas.add(atleta)
 
                 informacoes = {
                     'file': arquivo,
                     'path': caminho_completo,
                     'file_size': estatisticas_arquivo.st_size,
-                    'last_modify': Helpers.get_file_timestamp_TmzBr(diretorio)['formated_file_timestamp'].strftime(TIME_FORMAT_1),
+                    'last_modify': data_modificacao_formatada,
                     'row_count': numero_linhas,
                     'total_atletas': len(atletas)
                 }
 
+#  Helpers.get_file_timestamp_TmzBr(diretorio)['formated_file_timestamp'].strftime(TIME_FORMAT_1)
                 informacoes_arquivos.append(informacoes)
 
             return informacoes_arquivos
@@ -117,5 +117,6 @@ class Intern:
             files = self.listFiles(PATH_REF_DATA)
         else:
             return None
+        print(files)
         return files
 

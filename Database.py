@@ -1,5 +1,6 @@
 import mysql.connector
 from config import *
+
 class Database:
     def __init__(self, messages=False) -> None:
 
@@ -81,6 +82,7 @@ class Database:
                 self.info['errors'] = None
                 self.info['has_changed'] = "yes"
                 self.conn.commit()
+                return self.info
                 if self.messages == True:
                     print(self.info)
 

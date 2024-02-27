@@ -1,6 +1,5 @@
 import os
-import datetime
-from datetime import timezone
+from datetime import datetime, timezone
 from config import *
 import pytz
 import random

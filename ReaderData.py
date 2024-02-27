@@ -23,7 +23,8 @@ class ReaderData:
                 'port': self.server['equip_port'],
                 'timeoutMs': 3000
             }
-
+        self.equipamento = self.server = r_json(path=READER_CONFIG_FILE_PATH)
+        print(self.equipamento)
 
     def ReaderStatus():
        
@@ -125,50 +126,51 @@ class ReaderData:
         r_file = Intern()
         most_recent_file_path = r_file.getMostRecentFileModified(PATH_BRUTE_DATA)
         
-        # with open(most_recent_file_path, 'r') as file:
-        #     lines = file.readlines()
+        with open(most_recent_file_path, 'r') as file:
+            lines = file.readlines()
         
-        # unique_lines = list(dict.fromkeys(lines))
+        unique_lines = list(dict.fromkeys(lines))
         
-        # lines_without_letters = [line for line in unique_lines if not re.search('[a-zA-Z]', line)]
+        lines_without_letters = [line for line in unique_lines if not re.search('[a-zA-Z]', line)]
     
-        # with open(f"{PATH_REF_DATA}/refinado.txt", 'w') as output_file:
-        #     output_file.writelines(lines_without_letters)
+        with open(most_recent_file_path, 'w') as output_file:
+            output_file.writelines(lines_without_letters)
 
-        tempos = {}
-        
-    # Tenta abrir o arquivo e ler as linhas
-        
+        tempos = {}    
 
         try:
             r_file = Intern()
             most_recent_file_path = r_file.getMostRecentFileModified(PATH_BRUTE_DATA)
-
+            
             with open(most_recent_file_path) as arq:
-                # Lê o conteúdo do arquivo como uma string e divide em linhas
                 rows = arq.read().splitlines()
 
-                # Dicionário para armazenar uma lista dos primeiros tempos para cada atleta
                 tempos = {}
-
-                # Percorre as linhas do arquivo
+                largou = []
                 for row in rows:
-                    # Extrai o número do atleta e o tempo da linha
-                    numero_atleta = int(row[11:15])
+                    
+                    sessao_do_arquivo = str(row[:2])
+                    numero_atleta = int(row[23:27])
                     tempo_atleta = str(row[27:])
 
-                    # Adiciona o tempo do atleta à lista se não existir
+                    
                     if numero_atleta not in tempos:
                         tempos[numero_atleta] = [tempo_atleta]
 
-                # Imprime o dicionário resultante
-                print(tempos)
+                for numero_atleta, lista_tempos, sessao_do_arquivo in tempos.items():
+                    tempos = {
+                        "session": sessao_do_arquivo, 
+                        "atleta": numero_atleta,
+                        "primeiro_tempo": lista_tempos[0],
+                        "idprova": self.equipamento["idprova"],
+                    }
+                    largou.append(tempos)
+                    print(tempos)
+                w_json(f"{PATH_REF_DATA}/Largou.json", largou)
         except Exception as e:
-            print(f"Ocorreu um erro: {str(e)}")
-
             # Percorre o dicionário e imprime os tempos de cada atleta
-            for numero_atleta, lista_tempos in tempos.items():
-                print(f"{numero_atleta}: {lista_tempos}")
+            pass
+
     def Start_Counting(self, deviceParams = {}):
         startCount = Helpers.mount_url("http", f"{self.server['server_ip']}:{READER_SERVER_PORT}", "/StartCounting")
         response = requests.post(startCount, json=deviceParams)
