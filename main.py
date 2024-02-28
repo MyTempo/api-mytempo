@@ -26,7 +26,7 @@ def status_equip():
 def equip_data():
     return System.getEquipInfo();
 
-@app.route("/atualiza_equipamento", methods=['GET'])
+@app.route("/atualizar_equipamento", methods=['POST'])
 def atualiza_equipamento():
     upd_eqp = GetWebData()
     equip_model = System.getEquipInfo().get("modelo")
@@ -145,7 +145,7 @@ def buscar_arquivo_bruto(session):
             'retornomsg': 'Ocorreu um erro ao buscar arquivo.'
         })
     
-@app.route("/refinar/arquivo", methods=["POST"])
+@app.route("/pegar/primeiros-tempos", methods=["POST"])
 def refinar_arquivo():
     if(request.method == "POST"):
         r = ReaderData()
