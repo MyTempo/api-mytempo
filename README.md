@@ -3,8 +3,8 @@
   Aplicação em fase de Desenvolvimento
 </div></sup></sub>
 
-## Nota importante
-### A aplicação está em fase inical de desenvolvimento e qualquer falha ou bug devem ser contatadas ao desenvolvedor
+## Nota importante ⚠️
+### A aplicação está em fase inical de desenvolvimento e qualquer falha ou bug devem ser contatadas ao desenvolvedor 
 
 #### - Kerlon
 
