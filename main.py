@@ -1,10 +1,7 @@
 from config import *
 from flask import Flask, jsonify, request
-from flask_cors import CORS  # Importa a extensão CORS
+from flask_cors import CORS  
 import requests
-import json
-import time
-import subprocess
 
 from system import System
 from get_data import GetWebData
@@ -148,7 +145,16 @@ def buscar_arquivo_bruto(session):
             'retornomsg': 'Ocorreu um erro ao buscar arquivo.'
         })
     
+@app.route("/refinar/arquivo", methods=["POST"])
+def refinar_arquivo():
+    if(request.method == "POST"):
+        r = ReaderData()
+        return jsonify(r.getCompressedData())
+    
 
+# @app.route("/refinar/arquivo/<string:session>", methods=["GET"])
+# def refinar_arquivo(session):
+#     return jsonify({"session": session})
 
 @app.route("/buscar_arquivo/refinado/", methods=['POST', 'GET'])
 def buscar_arquivo_refinado_last():

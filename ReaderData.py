@@ -14,9 +14,11 @@ class ReaderData:
         self.tag_thread = False
         self.is_counting = False
         self.deviceParams = {}
-
+        self.session = ""
         #Setting Configurations 
+        self.created_at = ""
         self.server = r_json(path=SERVER_CONFIG_FILE_PATH)
+        
         self.reader_data = {
                 'server_ip': self.server['server_ip'],
                 'ip': READER_DEFAULT_IP,
@@ -24,15 +26,13 @@ class ReaderData:
                 'timeoutMs': 3000
             }
         self.equipamento = self.server = r_json(path=READER_CONFIG_FILE_PATH)
-        print(self.equipamento)
-
-    def ReaderStatus():
+     
+    def ReaderStatus(self):
        
         res = dict()
         # URL do seu aplicativo Flask
         server = r_json(path=SERVER_CONFIG_FILE_PATH)
         url = Helpers.mount_url("http", f"{server['server_ip']}:{READER_SERVER_PORT}", "/GetTagInfo")
-        
         try:
             response = requests.post(url, data={})
             if(response.status_code == 200):
@@ -122,7 +122,58 @@ class ReaderData:
         FirstTagInfo = threading.Thread(target=self.getCompressedData)
         FirstTagInfo.start()
     
+    # def getCompressedData_By_Arq_Name(self, session=""):
+    #     self.h = Helpers()
+    #     self.Sys = Intern()
+    #     self.h.created_at = TIME_FORMAT_1 
+    #     if(session):
+    #         self.file_path = self.Sys.getFileBySession(session_file=session, type_f=0)
+    #         # print(self.file_path)
+            
+    #     else:
+    #         return {"message": FileNotFoundError}
+    #     try:
+    #         with open(self.file_path, 'r') as file:
+    #             lines = file.readlines()
+            
+    #         unique_lines = list(dict.fromkeys(lines))
+            
+    #         lines_without_letters = [line for line in unique_lines if not re.search('[a-zA-Z]', line)]
+        
+    #         with open(self.file_path, 'w') as output_file:
+    #             output_file.writelines(lines_without_letters)
+
+    #         tempos_dict = {}    
+    #         self.session = str(lines_without_letters[0][0:3])
+
+    #         for row in lines_without_letters:
+    #             numero_atleta = int(row[23:27])
+    #             tempo_atleta = str(row[27:])
+                
+    #             tempos_dict.setdefault(numero_atleta, []).append(tempo_atleta)
+
+    #         largou = []
+    #         for numero_atleta, lista_tempos in tempos_dict.items():
+    #             tempo_atleta = lista_tempos[0]
+    #             tempos = {
+    #                 "session": self.session, 
+    #                 "atleta": numero_atleta,
+    #                 "primeiro_tempo": tempo_atleta,
+    #                 "idprova": self.equipamento["idprova"],
+    #                 "id_equipamento": self.equipamento["equipamento"]
+    #             }
+    #             largou.append(tempos)
+            
+    #         w_json(f"{PATH_REF_DATA}/{self.h.generateTagFileName(self.session, tag_type='refined')}", largou)
+    #         return {"message": "Arquivo Refinado com sucesso!"}
+    #     except Exception as e:
+    #         import traceback
+    #         print(f"Erro: {e}")
+    #         traceback.print_exc()
+        
     def getCompressedData(self):
+        self.h = Helpers()
+        self.h.created_at = TIME_FORMAT_1 
         r_file = Intern()
         most_recent_file_path = r_file.getMostRecentFileModified(PATH_BRUTE_DATA)
         
@@ -149,7 +200,7 @@ class ReaderData:
                 largou = []
                 for row in rows:
                     
-                    sessao_do_arquivo = str(row[:2])
+                    self.session = str(row[0:3])
                     numero_atleta = int(row[23:27])
                     tempo_atleta = str(row[27:])
 
@@ -157,34 +208,38 @@ class ReaderData:
                     if numero_atleta not in tempos:
                         tempos[numero_atleta] = [tempo_atleta]
 
-                for numero_atleta, lista_tempos, sessao_do_arquivo in tempos.items():
+                for numero_atleta, lista_tempos in tempos.items():
                     tempos = {
-                        "session": sessao_do_arquivo, 
+                        "session": self.session, 
                         "atleta": numero_atleta,
                         "primeiro_tempo": lista_tempos[0],
                         "idprova": self.equipamento["idprova"],
+                        "id_equipamento": self.equipamento["equipamento"]
                     }
                     largou.append(tempos)
-                    print(tempos)
-                w_json(f"{PATH_REF_DATA}/Largou.json", largou)
+                w_json(f"{PATH_REF_DATA}/{self.h.generateTagFileName(self.session, tag_type="refined")}", largou)
+                return {"message":"Arquivo Refinado com sucesso!"}
         except Exception as e:
-            # Percorre o dicionário e imprime os tempos de cada atleta
-            pass
+            import traceback
+            print(f"Erro: {e}")
+            traceback.print_exc()
 
     def Start_Counting(self, deviceParams = {}):
-        startCount = Helpers.mount_url("http", f"{self.server['server_ip']}:{READER_SERVER_PORT}", "/StartCounting")
+        server = r_json(path=SERVER_CONFIG_FILE_PATH)
+        startCount = Helpers.mount_url("http", f"{server['server_ip']}:{READER_SERVER_PORT}", "/StartCounting")
         response = requests.post(startCount, json=deviceParams)
+        print(startCount)
         return response
 
     def Start_Reader(self):
         self.GetPorts_Reader()
         try:
-            openConnUrl = Helpers.mount_url("http", f"{self.server['server_ip']}:{READER_SERVER_PORT}", "/OpenNetConnection")
+            server = r_json(path=SERVER_CONFIG_FILE_PATH)
+            openConnUrl = Helpers.mount_url("http", f"{server['server_ip']}:{READER_SERVER_PORT}", "/OpenNetConnection")
             requests.post(openConnUrl, data={})
-            url = Helpers.mount_url("http", f"{self.server['server_ip']}:{READER_SERVER_PORT}", "/OpenNetConnection")
+            url = Helpers.mount_url("http", f"{server['server_ip']}:{READER_SERVER_PORT}", "/OpenNetConnection")
             openNetConnection = requests.post(url, json=self.reader_data)
-    
-            
+
             if openNetConnection.status_code == 200:
                 try:
                     res_data = openNetConnection.json()
@@ -194,6 +249,7 @@ class ReaderData:
                     self.hComm = r_data.get("hComm")
                     if self.hComm:
                         getDeviceParam = self.GetDeviceParam(hComm=self.hComm)
+                        print(getDeviceParam)
                         deviceParams = getDeviceParam.get("data")
                         if(deviceParams.get("res_code") == 1001):
                             self.RetryToConnect_Reader()
@@ -257,9 +313,8 @@ class ReaderData:
 
     def GetPorts_Reader(self):
         res = dict()
-     
         server = r_json(path=SERVER_CONFIG_FILE_PATH)
-        url = Helpers.mount_url("http", f"{self.server['server_ip']}:{READER_SERVER_PORT}", "/getPorts")
+        url = Helpers.mount_url("http", f"{server['server_ip']}:{READER_SERVER_PORT}", "/getPorts")
         try:
             response = requests.post(url, data={})
             print(response.text)
@@ -327,7 +382,3 @@ class ReaderData:
             return response.json()
         except Exception as e:
             print(e)
-
-r = ReaderData()
-
-print(r.getCompressedData())

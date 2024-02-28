@@ -7,7 +7,7 @@ import random
 
 class Helpers:
     def __init__(self) -> None:
-        pass
+        self.created_at= ""
 
     def mount_url(protocol="http", mid_of_url="", route="/"):
         return f"{protocol}://{mid_of_url}{route}"
@@ -64,3 +64,14 @@ class Helpers:
         }
         return formatted_data
 
+    def generateTagFileName(self, session, tag_type="refined", created_at=TIME_FORMAT_2, file_type="json"):
+        
+        
+        if(tag_type == "brute"):
+            file_name = f'MyTempo-Bruto-Sess-{session} T-{created_at}.{file_type}'
+        elif(tag_type == "refined"):
+            file_name = f'MyTempo-Ref-Sess-{session} T-{created_at}.{file_type}'
+        else:
+            file_name = tag_type
+        return file_name
+    
