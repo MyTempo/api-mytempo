@@ -1,4 +1,13 @@
 # API-MyTempo - Reader Connection Interface
+<sub><sup><div style="opacity:0.5">
+  Aplicação em fase de Desenvolvimento
+</div></sup></sub>
+
+## Nota importante
+### A aplicação está em fase inical de desenvolvimento e qualquer falha ou bug devem ser contatadas ao desenvolvedor
+
+#### - Kerlon
+
 ---
 
 ## | System Routes
