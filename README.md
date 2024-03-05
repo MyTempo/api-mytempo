@@ -68,7 +68,7 @@
    - Rota: `/buscar_arquivo/refinado/<string:session>`
    - Método: `POST` `GET`
 
-7. **Pegar os ultimos tempos e atletas pelo arquivo mais recente**
+7. **Pegar os primeiros tempos e atletas pelo arquivo mais recente**
    - Considerando mais recente no servidor
    - Rota: `/pegar/primeiros-tempos`
    - Método: `POST`
