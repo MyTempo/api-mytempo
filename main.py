@@ -22,6 +22,10 @@ def template():
 def template_configurar():
     return render_template('configurar.html')
 
+@app.route('/actions/view/')
+def template_acoes():
+    return render_template('actions.html')
+
 
 @app.route('/status', methods=['GET'])
 def status_equip():
@@ -29,12 +33,17 @@ def status_equip():
 
 @app.route('/dados_equipamento', methods=['GET'])
 def equip_data():
-    return System.getEquipInfo();
+    sys = System()
+    return sys.getEquipInfo();
 
 @app.route("/atualizar_equipamento", methods=['POST'])
 def atualiza_equipamento():
+    sys = System()
     upd_eqp = GetWebData()
-    equip_model = System.getEquipInfo().get("modelo")
+    equip_info_response = sys.getEquipInfo()
+    equip_info_data = json.loads(equip_info_response)  # Converte a string JSON em um objeto Python
+    equip_model = equip_info_data.get("modelo")  # Acessa a chave "modelo" nos dados JSON
+
     result = upd_eqp.update_equip(equip_model, URL_DADOS_EQUIPAMENTO)
 
     if result['status'] == 'success':
@@ -255,7 +264,8 @@ def listar_arquivos_refinados():
 
 @app.route("/reader_status/", methods=['GET'])
 def reader_status():
-    return jsonify(ReaderData.ReaderStatus())
+    R = ReaderData()
+    return jsonify(R.ReaderStatus())
 
 @app.route("/start_reader/", methods=['POST'])
 def start_reader():

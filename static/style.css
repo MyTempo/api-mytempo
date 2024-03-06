@@ -38,3 +38,6 @@
     font-size: 14px; /* Tamanho da fonte */
     opacity: 0.7; /* Opacidade do texto */
 }
+.info-table th {
+    width: 33%; /* Define a largura das colunas para 33% */
+}

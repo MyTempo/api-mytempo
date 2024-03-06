@@ -37,7 +37,7 @@ class System:
                 }
                 return jsonify(res)
 
-    def getEquipInfo():
+    def getEquipInfo(self):
         try:
             with open(READER_CONFIG_FILE_PATH, 'r') as arquivo:
                 equip_data = json.load(arquivo)
@@ -53,6 +53,7 @@ class System:
                     'retornomsg': 'O equipamento não está conectado á internet',
                     'modelo': ""
                 }
+        print(res)
         return jsonify(res)
     
     
