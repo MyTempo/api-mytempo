@@ -97,7 +97,7 @@ class Intern:
                     'total_atletas': len(atletas)
                 }
 
-#  Helpers.get_file_timestamp_TmzBr(diretorio)['formated_file_timestamp'].strftime(TIME_FORMAT_1)
+
                 informacoes_arquivos.append(informacoes)
 
             return informacoes_arquivos

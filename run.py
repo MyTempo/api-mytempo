@@ -9,7 +9,6 @@ import socket
 
 def get_local_ip_addr():
     try:
-        # Cria um socket para pegar  host
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(("8.8.8.8", 80)) 
         ip_address = s.getsockname()[0]
@@ -19,8 +18,12 @@ def get_local_ip_addr():
         print(f"Erro ao obter o endereço IP: {e}")
         return None
 
+def create_base_directories():
+   for d in DIRETORIOS_BASE_LISTA:
+       verify_and_create(d)
 
 if __name__ == '__main__':
+    create_base_directories()
     ip_servidor = get_local_ip_addr()
     if ip_servidor:
         data = {

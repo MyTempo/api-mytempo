@@ -38,10 +38,21 @@ class System:
                 return jsonify(res)
 
     def getEquipInfo():
-        with open(READER_CONFIG_FILE_PATH, 'r') as arquivo:
-            equip_data = json.load(arquivo)
-            return equip_data
+        try:
+            with open(READER_CONFIG_FILE_PATH, 'r') as arquivo:
+                equip_data = json.load(arquivo)
+                equip_data['status_e'] = 'success'
+                equip_data_json = json.dumps(equip_data)
 
-
+                return equip_data_json
+        except Exception:
+            res = {
+                    'status': 'error',
+                    'message': 'Ocorreu um erro na verificação',
+                    'erro': 1,
+                    'retornomsg': 'O equipamento não está conectado á internet',
+                    'modelo': ""
+                }
+        return jsonify(res)
     
     

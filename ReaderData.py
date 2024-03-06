@@ -8,6 +8,7 @@ from datetime import datetime
 from readfiles import Intern
 import re
 
+
 class ReaderData:
     def __init__(self) -> None:
         self.hComm = ""
@@ -122,55 +123,57 @@ class ReaderData:
         FirstTagInfo = threading.Thread(target=self.getCompressedData)
         FirstTagInfo.start()
     
-    # def getCompressedData_By_Arq_Name(self, session=""):
-    #     self.h = Helpers()
-    #     self.Sys = Intern()
-    #     self.h.created_at = TIME_FORMAT_1 
-    #     if(session):
-    #         self.file_path = self.Sys.getFileBySession(session_file=session, type_f=0)
-    #         # print(self.file_path)
+    def getCompressedData_By_Arq_Name(self, session=""):
+        self.h = Helpers()
+        self.Sys = Intern()
+        self.h.created_at = TIME_FORMAT_1 
+        if(session):
+            self.file_path = self.Sys.getFileBySession(session_file=session, type_f=0)
+            # print(self.file_path)
             
-    #     else:
-    #         return {"message": FileNotFoundError}
-    #     try:
-    #         with open(self.file_path, 'r') as file:
-    #             lines = file.readlines()
+        else:
+            return {"message": FileNotFoundError}
+        try:
+            with open(self.file_path, 'r') as file:
+                lines = file.readlines()
             
-    #         unique_lines = list(dict.fromkeys(lines))
+            unique_lines = list(dict.fromkeys(lines))
             
-    #         lines_without_letters = [line for line in unique_lines if not re.search('[a-zA-Z]', line)]
+            lines_without_letters = [line for line in unique_lines if not re.search('[a-zA-Z]', line)]
         
-    #         with open(self.file_path, 'w') as output_file:
-    #             output_file.writelines(lines_without_letters)
+            with open(self.file_path, 'w') as output_file:
+                output_file.writelines(lines_without_letters)
 
-    #         tempos_dict = {}    
-    #         self.session = str(lines_without_letters[0][0:3])
+            tempos_dict = {}    
+            self.session = str(lines_without_letters[0][0:3])
 
-    #         for row in lines_without_letters:
-    #             numero_atleta = int(row[23:27])
-    #             tempo_atleta = str(row[27:])
+            for row in lines_without_letters:
+                numero_atleta = int(row[23:27])
+                tempo_atleta = str(row[27:])
                 
-    #             tempos_dict.setdefault(numero_atleta, []).append(tempo_atleta)
+                tempos_dict.setdefault(numero_atleta, []).append(tempo_atleta)
 
-    #         largou = []
-    #         for numero_atleta, lista_tempos in tempos_dict.items():
-    #             tempo_atleta = lista_tempos[0]
-    #             tempos = {
-    #                 "session": self.session, 
-    #                 "atleta": numero_atleta,
-    #                 "primeiro_tempo": tempo_atleta,
-    #                 "idprova": self.equipamento["idprova"],
-    #                 "id_equipamento": self.equipamento["equipamento"]
-    #             }
-    #             largou.append(tempos)
+            largou = []
+            for numero_atleta, lista_tempos in tempos_dict.items():
+                tempo_atleta = lista_tempos[0]
+                tempos = {
+                    "session": self.session, 
+                    "atleta": numero_atleta,
+                    "primeiro_tempo": tempo_atleta,
+                    "idprova": self.equipamento["idprova"],
+                    "id_equipamento": self.equipamento["equipamento"]
+                }
+                largou.append(tempos)
             
-    #         w_json(f"{PATH_REF_DATA}/{self.h.generateTagFileName(self.session, tag_type='refined')}", largou)
-    #         return {"message": "Arquivo Refinado com sucesso!"}
-    #     except Exception as e:
-    #         import traceback
-    #         print(f"Erro: {e}")
-    #         traceback.print_exc()
-        
+            w_json(f"{PATH_REF_DATA}/{self.h.generateTagFileName(self.session, tag_type='refined')}", largou)
+            return {"message": "Arquivo Refinado com sucesso!"}
+        except Exception as e:
+            import traceback
+            print(f"Erro: {e}")
+            traceback.print_exc()
+
+
+
     def getCompressedData(self):
         self.h = Helpers()
         self.h.created_at = TIME_FORMAT_1 
@@ -381,4 +384,4 @@ class ReaderData:
             response = requests.post(url, json=data)
             return response.json()
         except Exception as e:
-            print(e)
+            print(e)    

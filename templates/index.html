@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='all.min.css') }}">
+
+
+
+    <title>Reader</title>
+</head>
+
+<body>
+    <div id="overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="card">
+        <h1 class="reader-name text-center"></h1>
+
+        <div class="reader-internet-status m-2 text-end verifying"><i class="fa-solid fa-wifi"></i> Verificando
+            aguarde...<div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+        <div class="leitor-status text-end"></div>
+
+        <div class="row">
+           
+        </div>
+    </div>
+
+    <div class="reader-configurations">
+        
+    </div>
+
+
+
+    <script src="{{ url_for('static', filename='jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ url_for('static', filename='index.js') }}"></script>
+    <script src="{{ url_for('static', filename='all.min.js') }}"></script>
+
+</body>
+
+</html>

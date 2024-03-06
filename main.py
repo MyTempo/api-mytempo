@@ -1,5 +1,5 @@
 from config import *
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS  
 import requests
 
@@ -12,11 +12,16 @@ from ReaderData import *
 
 app = Flask(__name__)
 CORS(app)  # Configurações do CORS
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
 @app.route('/')
-def obter_ip_exposto():
-   
-    return jsonify({"Working!": "True"})
+def template():
+    return render_template('index.html', no_cache=True)
+
+@app.route('/configurar/view/')
+def template_configurar():
+    return render_template('configurar.html')
+
 
 @app.route('/status', methods=['GET'])
 def status_equip():
@@ -48,22 +53,32 @@ def configurar_equipamento():
                dados_request = {
                    "nome_equipamento": equip_name
                }
-               response = requests.post(URL_DADOS_EQUIPAMENTO, json=dados_request)
-               dados = response.json()[0]
-               gwt = GetWebData()
-               gwt.config_equip(dados)   
-               return jsonify({
-                'data': dados,
-                'status': 'success',
-                'message': 'Sucesso ao configurar equipamento',
-                'erro': 0,
-                'retornomsg': "Equipamento configurado com sucesso!",
-                })
-            
+               try:
+                   response = requests.post(URL_DADOS_EQUIPAMENTO, json=dados_request)
+                   dados = response.json()[0]
+               
+                   
+                   gwt = GetWebData()
+                   gwt.config_equip(dados)  
+                    
+                   return jsonify({
+                        'data': dados,
+                        'status': 'success',
+                        'message': 'Sucesso ao configurar equipamento',
+                        'erro': 0,
+                        'retornomsg': "Equipamento configurado com sucesso!",
+                        }) 
+               except:
+                    return jsonify({
+                        'status': 'error',
+                        'message': 'Falha ao configurar equipamento',
+                        'erro': 1,
+                        'retornomsg': "Falha ao configurado configurar equipamento!",
+                        }) 
             else:
-                return jsonify({
-                    "Message": "Parâmetros não passados corretamente."
-                })
+                        return jsonify({
+                            "Message": "Parâmetros não passados corretamente."
+                        })
             # response = requests.post(URL_DADOS_EQUIPAMENTO, json={
             #     "nome_equipamento": equip_name
             # })
