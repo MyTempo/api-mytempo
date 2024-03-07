@@ -277,3 +277,9 @@ def stop_reader():
     Reader = ReaderData()
     return jsonify(Reader.Stop_Reader())
 
+@app.route("/iniciar/comunicacao/", methods=['POST'])
+def iniciar_envio():
+    if(request.method == "POST"):
+        r = ReaderData()
+        return jsonify(r.uploadPrimeirosTempos())
+    

@@ -7,6 +7,8 @@ from helpers import *
 from datetime import datetime
 from readfiles import Intern
 import re
+from Upload import *
+from SQliteDB import *
 
 
 class ReaderData:
@@ -16,10 +18,12 @@ class ReaderData:
         self.is_counting = False
         self.deviceParams = {}
         self.session = ""
+
         #Setting Configurations 
         self.created_at = ""
         self.server = r_json(path=SERVER_CONFIG_FILE_PATH)
-        
+        self.upload = Upload()
+
         self.reader_data = {
                 'server_ip': self.server['server_ip'],
                 'ip': READER_DEFAULT_IP,
@@ -27,7 +31,13 @@ class ReaderData:
                 'timeoutMs': 3000
             }
         self.equipamento = self.server = r_json(path=READER_CONFIG_FILE_PATH)
-     
+        self.localDB = LocalDatabase()
+        #data 
+
+        self.atletas_num = []
+        self.atletas = []
+        self.atletas_tempos = []
+
     def ReaderStatus(self):
        
         res = dict()
@@ -123,56 +133,6 @@ class ReaderData:
         FirstTagInfo = threading.Thread(target=self.getCompressedData)
         FirstTagInfo.start()
     
-    def getCompressedData_By_Arq_Name(self, session=""):
-        self.h = Helpers()
-        self.Sys = Intern()
-        self.h.created_at = TIME_FORMAT_1 
-        if(session):
-            self.file_path = self.Sys.getFileBySession(session_file=session, type_f=0)
-            # print(self.file_path)
-            
-        else:
-            return {"message": FileNotFoundError}
-        try:
-            with open(self.file_path, 'r') as file:
-                lines = file.readlines()
-            
-            unique_lines = list(dict.fromkeys(lines))
-            
-            lines_without_letters = [line for line in unique_lines if not re.search('[a-zA-Z]', line)]
-        
-            with open(self.file_path, 'w') as output_file:
-                output_file.writelines(lines_without_letters)
-
-            tempos_dict = {}    
-            self.session = str(lines_without_letters[0][0:3])
-
-            for row in lines_without_letters:
-                numero_atleta = int(row[23:27])
-                tempo_atleta = str(row[27:])
-                
-                tempos_dict.setdefault(numero_atleta, []).append(tempo_atleta)
-
-            largou = []
-            for numero_atleta, lista_tempos in tempos_dict.items():
-                tempo_atleta = lista_tempos[0]
-                tempos = {
-                    "session": self.session, 
-                    "atleta": numero_atleta,
-                    "primeiro_tempo": tempo_atleta,
-                    "idprova": self.equipamento["idprova"],
-                    "id_equipamento": self.equipamento["equipamento"]
-                }
-                largou.append(tempos)
-            
-            w_json(f"{PATH_REF_DATA}/{self.h.generateTagFileName(self.session, tag_type='refined')}", largou)
-            return {"message": "Arquivo Refinado com sucesso!"}
-        except Exception as e:
-            import traceback
-            print(f"Erro: {e}")
-            traceback.print_exc()
-
-
 
     def getCompressedData(self):
         self.h = Helpers()
@@ -217,15 +177,102 @@ class ReaderData:
                         "atleta": numero_atleta,
                         "primeiro_tempo": lista_tempos[0],
                         "idprova": self.equipamento["idprova"],
-                        "id_equipamento": self.equipamento["equipamento"]
+                        "id_equipamento": self.equipamento["equipamento"],
+                        "id_checkpoint": self.equipamento['idcheck'],
+                        "identificacao": self.equipamento['identificacao'],
+                        "hora_prova": self.equipamento['hora']
                     }
                     largou.append(tempos)
+
                 w_json(f"{PATH_REF_DATA}/{self.h.generateTagFileName(self.session, tag_type="refined")}", largou)
                 return {"message":"Arquivo Refinado com sucesso!"}
         except Exception as e:
             import traceback
             print(f"Erro: {e}")
             traceback.print_exc()
+
+    def onlyAthleteNum(self, results):
+        for r in results:
+            self.atletas.append(r[0])
+        return self.atletas
+
+        
+
+    def uploadPrimeirosTempos(self):
+        
+        self.atletas = self.onlyAthleteNum(self.localDB.executeQuery(f"SELECT numero_atleta FROM atletas_da_prova WHERE id_prova = {self.equipamento['idprova']}"))
+
+        self.h = Helpers()
+        self.h.created_at = TIME_FORMAT_1 
+        r_file = Intern()
+        most_recent_file_path = r_file.getMostRecentFileModified(PATH_BRUTE_DATA)
+        
+        with open(most_recent_file_path, 'r') as file:
+            lines = file.readlines()
+        
+        unique_lines = list(dict.fromkeys(lines))
+        
+        lines_without_letters = [line for line in unique_lines if not re.search('[a-zA-Z]', line)]
+    
+        with open(most_recent_file_path, 'w') as output_file:
+            output_file.writelines(lines_without_letters)
+
+        tempos = {}    
+
+        try:
+            r_file = Intern()
+            most_recent_file_path = r_file.getMostRecentFileModified(PATH_BRUTE_DATA)
+            
+            with open(most_recent_file_path) as arq:
+                rows = arq.read().splitlines()
+
+                tempos = {}
+                largou = []
+                for row in rows:
+                    
+                    self.session = str(row[0:3])
+                    numero_atleta = int(row[23:27])
+                    tempo_atleta = str(row[27:])
+
+                    
+                    if numero_atleta not in tempos:
+                        tempos[numero_atleta] = [tempo_atleta]
+
+                
+         
+                for numero_atleta, lista_tempos in tempos.items():
+                    self.atletas_num.append(numero_atleta)
+                    self.atletas_tempos.append(lista_tempos[0])
+
+                set_atletas = set(self.atletas)
+                set_atletas_num = set(self.atletas_num)
+
+                common_atletas = set_atletas.intersection(set_atletas_num)
+
+                for atleta in common_atletas:
+                    print(atleta)
+                    # self.upload.primeirosTempos(self.equipamento["idprova"], self.equipamento['idcheck'], self.equipamento['equipamento'], atleta, )
+                                                
+                    # tempos = {
+                    #     "session": self.session, 
+                    #     "atleta": numero_atleta,
+                    #     "primeiro_tempo": lista_tempos[0],
+                    #     "idprova": self.equipamento["idprova"],
+                    #     "id_equipamento": self.equipamento["equipamento"],
+                    #     "id_checkpoint": self.equipamento['idcheck'],
+                    #     "identificacao": self.equipamento['identificacao'],
+                    #     "hora_prova": self.equipamento['hora']
+                    # }
+                  
+               
+                # w_json(f"{PATH_REF_DATA}/{self.h.generateTagFileName(self.session, tag_type="refined")}", largou)
+                return {"message":"Arquivo Refinado com sucesso!"}
+        except Exception as e:
+            import traceback
+            print(f"Erro: {e}")
+            traceback.print_exc()
+  
+
 
     def Start_Counting(self, deviceParams = {}):
         server = r_json(path=SERVER_CONFIG_FILE_PATH)
@@ -365,7 +412,6 @@ class ReaderData:
         }
         try:
             response = requests.post(url, json=data)
-            print(response.text)
             return response.json()
         except Exception as e:
             print(e)
@@ -385,3 +431,8 @@ class ReaderData:
             return response.json()
         except Exception as e:
             print(e)    
+
+
+r = ReaderData()
+
+r.uploadPrimeirosTempos()

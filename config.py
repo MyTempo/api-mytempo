@@ -20,6 +20,9 @@ SERVER_CONFIG_FILE_PATH = f"{PATH_READER_DATA}{SERVER_CONFIG_FILE_NAME}"
 
 DIRETORIOS_BASE_LISTA = [PATH_BRUTE_DATA, PATH_REF_DATA, PATH_READER_DATA]
 
+DB_DIR = os.path.join(os.getcwd(), 'database')
+DB_PATH = f"{DB_DIR}\mytempo.db"
+
 MYTEMPO_MYSQL_CONFIG = {
     "host": "162.240.222.71",
     "user": "mytempoesp_base",

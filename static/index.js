@@ -129,7 +129,7 @@ $(document).ready(function () {
 
                 response.forEach(function (o) {
 
-                    let liElement = $('<i class="fa-solid fa-file"></i><li class="list-group-item btn" data-file="' + o.file + '" data-file_size="' + o.file_size + '" data-last_modify="' + o.last_modify + '" data-row_count="' + o.row_count + '" data-total_atletas="' + o.total_atletas + '" data-bs-toggle="modal" data-bs-target="#arquivoModal"></li>');
+                    let liElement = $('<li class="list-group-item btn" data-file="' + o.file + '" data-file_size="' + o.file_size + '" data-last_modify="' + o.last_modify + '" data-row_count="' + o.row_count + '" data-total_atletas="' + o.total_atletas + '" data-bs-toggle="modal" data-bs-target="#arquivoModal"></li>');
                     liElement.text(`${o.file}`);
                     ulElement.append(liElement);
 
@@ -176,7 +176,7 @@ $(document).ready(function () {
 
                 response.forEach(function (o) {
 
-                    let liElement = $('<i class="fa-solid fa-file"></i><li class="list-group-item btn" data-file="' + o.file + '" data-file_size="' + o.file_size + '" data-last_modify="' + o.last_modify + '" data-row_count="' + o.row_count + '" data-total_atletas="' + o.total_atletas + '" data-bs-toggle="modal" data-bs-target="#arquivoModal"></li>');
+                    let liElement = $('<li class="list-group-item btn" data-file="' + o.file + '" data-file_size="' + o.file_size + '" data-last_modify="' + o.last_modify + '" data-row_count="' + o.row_count + '" data-total_atletas="' + o.total_atletas + '" data-bs-toggle="modal" data-bs-target="#arquivoModal"></li>');
                     liElement.text(`${o.file}`);
                     ulElement.append(liElement);
 
@@ -234,10 +234,10 @@ $(document).ready(function () {
             url: '/reader_status',
             success: function (response) {
                 if(response.status == "success") {
-                    $(".comunicando").html(`<i class="fa-solid fa-arrow-right-arrow-left"></i> Comunicando`)
+                    $(".comunicando").html(`<i class="fa-solid fa-arrow-right-arrow-left"></i> A leitura está em andamento`)
                     $(".comunicacao-status").removeClass("disconnected")
                     $(".comunicacao-status").addClass("connected")
-
+                    // document.getElementById("iniciar-leitura").removeAttribute("disabled");
                     let tags = response.data.data.taginfo;
                     let tableBody = $(".info-table");
                     tableBody.empty();
@@ -286,5 +286,51 @@ $(document).ready(function () {
             }
         })
     }
+    
+    $(document).on("click", "#parar-leitura", function () {
+        $.ajax({
+            type: 'POST',
+            url: '/stop_reader/',
+            data: {},
+            success: function (response) {
+                console.log(response)
+               
+            },
+            error: function (xhr, status, error) {
+                console.error('Erro na solicitação AJAX:', error);
+            }
+        })
+    })
+
+    $(document).on("click", "#pegar-primeiros-tempos", function () {
+        $.ajax({
+            type: 'POST',
+            url: '/pegar/primeiros-tempos',
+            data: {},
+            success: function (response) {
+                console.log(response)
+               
+            },
+            error: function (xhr, status, error) {
+                console.error('Erro na solicitação AJAX:', error);
+            }
+        })
+    })
+
+    $(document).on("click", "#iniciar-comunicacao", function () {
+        $.ajax({
+            type: 'POST',
+            url: '/iniciar/comunicacao/',
+            data: {},
+            success: function (response) {
+                console.log(response)
+               
+            },
+            error: function (xhr, status, error) {
+                console.error('Erro na solicitação AJAX:', error);
+            }
+        })
+    })
+   
 });
 

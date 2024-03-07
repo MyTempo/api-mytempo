@@ -33,8 +33,9 @@ if __name__ == '__main__':
         }
         w_json(f"{PATH_READER_DATA}/server.json", data)
         mt = MyTempo()
-        print(mt.setIp(data["server_ip"], data['port']))
-        app.run(host='0.0.0.0', port=data["port"], debug=True)
+        mt.setIp(data["server_ip"], data['port'])
+        
+        app.run(host='0.0.0.0', port=data["port"])
         
     else:
         print("Não foi possível obter o endereço IP do servidor.")
