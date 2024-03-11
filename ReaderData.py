@@ -9,7 +9,7 @@ from readfiles import Intern
 import re
 from Upload import *
 from SQliteDB import *
-
+import time
 
 class ReaderData:
     def __init__(self) -> None:
@@ -37,6 +37,7 @@ class ReaderData:
         self.atletas_num = []
         self.atletas = []
         self.atletas_tempos = []
+        self.is_sending = False
 
     def ReaderStatus(self):
        
@@ -237,42 +238,47 @@ class ReaderData:
                     
                     if numero_atleta not in tempos:
                         tempos[numero_atleta] = [tempo_atleta]
-
-                
          
                 for numero_atleta, lista_tempos in tempos.items():
-                    self.atletas_num.append(numero_atleta)
-                    self.atletas_tempos.append(lista_tempos[0])
+                    self.upload.primeirosTempos(self.equipamento['idprova'], self.equipamento['idcheck'], self.equipamento['equipamento'], numero_atleta, lista_tempos[0], antena=0, local=self.equipamento['identificacao'], entrada=2, idstaff=9)
+                    
+                db = Database()
+                db.conn = mysql.connector.connect(
+                host=db.host,
+                user=db.user,
+                password=db.password,
+                database=db.database
+                )
 
-                set_atletas = set(self.atletas)
-                set_atletas_num = set(self.atletas_num)
+                if db.conn.is_connected():
+                    cursor = db.conn.cursor()
 
-                common_atletas = set_atletas.intersection(set_atletas_num)
+                    for q in self.upload.atletas_enviados: 
+                        cursor.execute(q)
 
-                for atleta in common_atletas:
-                    print(atleta)
-                    # self.upload.primeirosTempos(self.equipamento["idprova"], self.equipamento['idcheck'], self.equipamento['equipamento'], atleta, )
-                                                
-                    # tempos = {
-                    #     "session": self.session, 
-                    #     "atleta": numero_atleta,
-                    #     "primeiro_tempo": lista_tempos[0],
-                    #     "idprova": self.equipamento["idprova"],
-                    #     "id_equipamento": self.equipamento["equipamento"],
-                    #     "id_checkpoint": self.equipamento['idcheck'],
-                    #     "identificacao": self.equipamento['identificacao'],
-                    #     "hora_prova": self.equipamento['hora']
-                    # }
-                  
-               
-                # w_json(f"{PATH_REF_DATA}/{self.h.generateTagFileName(self.session, tag_type="refined")}", largou)
-                return {"message":"Arquivo Refinado com sucesso!"}
+                    cursor.close()
+                    db.conn.commit()
+                    db.conn.close()
+                return {"message": "sucesso!"}
         except Exception as e:
             import traceback
             print(f"Erro: {e}")
             traceback.print_exc()
   
 
+    def StartSendLoop(self):
+        while True:
+            if self.is_sending:
+                if self.send_thread is None or not self.send_thread.is_alive():
+                    self.send_thread = threading.Thread(target=self.uploadPrimeirosTempos)
+                    self.send_thread.start()
+            else:
+                if self.send_thread is not None and self.send_thread.is_alive():
+                    pass            
+            time.sleep(5)  
+
+    def toggleEnvio(self, estado):
+        self.is_sending = estado 
 
     def Start_Counting(self, deviceParams = {}):
         server = r_json(path=SERVER_CONFIG_FILE_PATH)
@@ -299,7 +305,6 @@ class ReaderData:
                     self.hComm = r_data.get("hComm")
                     if self.hComm:
                         getDeviceParam = self.GetDeviceParam(hComm=self.hComm)
-                        print(getDeviceParam)
                         deviceParams = getDeviceParam.get("data")
                         if(deviceParams.get("res_code") == 1001):
                             self.RetryToConnect_Reader()
@@ -433,6 +438,3 @@ class ReaderData:
             print(e)    
 
 
-r = ReaderData()
-
-r.uploadPrimeirosTempos()

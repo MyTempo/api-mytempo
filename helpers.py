@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from config import *
 import pytz
 import random
-
+import requests
 
 class Helpers:
     def __init__(self) -> None:
@@ -65,8 +65,6 @@ class Helpers:
         return formatted_data
 
     def generateTagFileName(self, session, tag_type="refined", created_at=TIME_FORMAT_2, file_type="json"):
-        
-        
         if(tag_type == "brute"):
             file_name = f'MyTempo-Bruto-Sess-{session} T-{created_at}.{file_type}'
         elif(tag_type == "refined"):

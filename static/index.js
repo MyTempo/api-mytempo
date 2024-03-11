@@ -228,12 +228,12 @@ $(document).ready(function () {
         });
     })
 
-    setInterval(function() {
+    setInterval(function () {
         $.ajax({
             type: 'GET',
             url: '/reader_status',
             success: function (response) {
-                if(response.status == "success") {
+                if (response.status == "success") {
                     $(".comunicando").html(`<i class="fa-solid fa-arrow-right-arrow-left"></i> A leitura está em andamento`)
                     $(".comunicacao-status").removeClass("disconnected")
                     $(".comunicacao-status").addClass("connected")
@@ -241,20 +241,20 @@ $(document).ready(function () {
                     let tags = response.data.data.taginfo;
                     let tableBody = $(".info-table");
                     tableBody.empty();
-                   
-                    tags.forEach((tag, i)=> {
+
+                    tags.forEach((tag, i) => {
                         let newRow = $("<tr>");
-                    
+
                         let indexCell = $("<td>").text(i + 1);
-                        let tagCell = $("<td>").text(tag.m_code.slice(32, 57).replace(/\s+/g, '')); 
-                        let lastTimestamp = $("<td>").text(tag.timestamp); 
+                        let tagCell = $("<td>").text(tag.m_code.slice(32, 57).replace(/\s+/g, ''));
+                        let lastTimestamp = $("<td>").text(tag.timestamp);
                         let countCell = $("<td>").text(tag.m_counts);
 
                         newRow.append(indexCell);
                         newRow.append(tagCell);
                         newRow.append(countCell);
                         newRow.append(lastTimestamp);
-                    
+
                         tableBody.append(newRow);
                     });
 
@@ -269,7 +269,7 @@ $(document).ready(function () {
             error: function (xhr, status, error) {
                 console.error('Erro na solicitação AJAX:', error);
             }
-    
+
         });
     }, 5000);
 
@@ -286,7 +286,7 @@ $(document).ready(function () {
             }
         })
     }
-    
+
     $(document).on("click", "#parar-leitura", function () {
         $.ajax({
             type: 'POST',
@@ -294,7 +294,7 @@ $(document).ready(function () {
             data: {},
             success: function (response) {
                 console.log(response)
-               
+
             },
             error: function (xhr, status, error) {
                 console.error('Erro na solicitação AJAX:', error);
@@ -309,7 +309,7 @@ $(document).ready(function () {
             data: {},
             success: function (response) {
                 console.log(response)
-               
+
             },
             error: function (xhr, status, error) {
                 console.error('Erro na solicitação AJAX:', error);
@@ -317,20 +317,122 @@ $(document).ready(function () {
         })
     })
 
-    $(document).on("click", "#iniciar-comunicacao", function () {
+    // $(document).on("click", "#iniciar-comunicacao", function () {
+    //     $.ajax({
+    //         type: 'POST',
+    //         url: '/iniciar/comunicacao/',
+    //         data: {},
+    //         success: function (response) {
+    //             console.log(response)
+
+    //         },
+    //         error: function (xhr, status, error) {
+    //             console.error('Erro na solicitação AJAX:', error);
+    //         }
+    //     })
+    // })
+
+    var intervalId;
+
+    function startCommunication() {
+        if (!intervalId) {
+            $("#iniciar-comunicacao").prop("disabled", true);
+            intervalId = setInterval(function() {
+                $.ajax({
+                    type: 'POST',
+                    url: '/iniciar/comunicacao/',
+                    contentType: 'application/json',
+                    data: {},
+                    success: function (response) {
+                        showToast(response.status, response.message, 3000);
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Erro na solicitação AJAX:', error);
+                    }
+                });
+            }, 5000);
+        }
+    }
+    
+    function pauseCommunication() {
+        clearInterval(intervalId);
+        intervalId = null;
+        $("#iniciar-comunicacao").prop("disabled", false);
         $.ajax({
             type: 'POST',
-            url: '/iniciar/comunicacao/',
-            data: {},
+            url: '/insert/tempos',
+            contentType: 'application/json',
+            data: JSON.stringify({"acao": "desligar"}),
             success: function (response) {
-                console.log(response)
-               
+                showToast(response.status, response.message, 3000);
             },
             error: function (xhr, status, error) {
                 console.error('Erro na solicitação AJAX:', error);
             }
-        })
-    })
-   
+        });
+    }
+    
+    $(document).on("click", "#iniciar-comunicacao", function () {
+        startCommunication();
+    });
+    
+    $(document).on("click", "#pausar-comunicacao", function () {
+        pauseCommunication();
+    });
+    $(document).on("click", "#limpar-atletas", function () {
+        $.ajax({
+            type: 'POST',
+            url: '/limpar/atletas_local',
+            contentType: 'application/json',
+            data: {},
+            success: function (response) {
+                showToast(response.status, response.message, 3000);
+            },
+            error: function (xhr, status, error) {
+                console.error('Erro na solicitação AJAX:', error);
+            }
+        });
+    });
+    $(document).on("click", ".mostrar-atletas", function () {
+        $(".mostrar-atletas-card").removeClass("d-none");
+        updateTable();
+    });
+    
+    function updateTable() {
+        $.ajax({
+            type: 'GET',
+            url: '/atletas_chegaram',
+            contentType: 'application/json',
+            data: {},
+            success: function (response) {
+                $(".atletas-chegaram").addClass("d-none");
+                let tableBody = $(".info-table-atletas");
+                tableBody.empty();
+                if (response.data.length > 0) {
+                    response.data.forEach((element, i) => {
+                        let newRow = $("<tr>");
+                        let indexCell = $("<td>").text(i + 1);
+                        let atleta = $("<td>").text(element[4]);
+                        let tempos = $("<td>").text(element[5]);
+                        let idcheck = $("<td>").text(element[2]);
+                        let equipamento = $("<td>").text(element[3]);
+                        newRow.append(indexCell);
+                        newRow.append(atleta);
+                        newRow.append(tempos);
+                        newRow.append(idcheck);
+                        newRow.append(equipamento);
+                        tableBody.append(newRow);
+                    });
+                } else {
+                    tableBody.html("Sem resultados");
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('Erro na solicitação AJAX:', error);
+            }
+        });
+    }
+    
+    setInterval(updateTable, 5000);
 });
 

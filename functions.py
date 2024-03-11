@@ -27,3 +27,14 @@ def restart_server():
             sys.exit()
         except Exception as e:
             print(f"Erro ao reiniciar o servidor: {e}")
+
+def sanitizeTimeInput(calculo):
+    try:
+        #tira as pontuações
+        calculo = calculo.replace('-','')
+        calculo = calculo.replace(' ','')
+        calculo = calculo.replace(':','')
+        calculo = calculo.replace('.','')
+        return calculo
+    except Exception as e:
+        print(f"Erro ao formatar tempo: err -> {e}")

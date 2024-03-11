@@ -21,7 +21,7 @@ class MyTempo:
                         result = db.executeNonQuery(update)
                         if result['status'] == "success":
                             self.emptyAthletesTable()
-                            self.GetAthletes()
+                            # self.GetAthletes()
                             return "Equipamento iniciado e configurado com sucesso!"
             except FileNotFoundError as e:
                 print("Falha ao configurar servidor remoto: -> ", e)

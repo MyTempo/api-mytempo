@@ -281,5 +281,58 @@ def stop_reader():
 def iniciar_envio():
     if(request.method == "POST"):
         r = ReaderData()
-        return jsonify(r.uploadPrimeirosTempos())
+        # return jsonify()
+        r.uploadPrimeirosTempos()
+        return jsonify({
+                "status": "success",
+                "message": "Comunicando!"
+            })
     
+# @app.route("/insert/tempos", methods=["POST"])
+# def insere_na_tabela():
+#     data = request.json  
+#     if data and "acao" in data:
+#         acao = data["acao"]
+#         if acao == "ligar":
+#             # r.toggleEnvio(True)
+            
+            
+#             return jsonify({
+#                 "status": "success",
+#                 "message": "Comunicando!"
+#             })
+#         elif acao == "desligar":
+#             # r.toggleEnvio(False)
+#             return jsonify({
+#                 "status": "success",
+#                 "message": "Comunicação pausada com sucesso!"
+#             })
+#         else:
+#             return "Ação desconhecida", 400
+#     else:
+#         return "Dados inválidos", 400
+
+@app.route("/limpar/atletas_local", methods=["POST"])
+def apagar_atletas():
+    from MyTempo import MyTempo
+    m = MyTempo()
+    m.emptyAthletesTable()
+    return jsonify({
+        "status": "success",
+        "message": "Atletas do equipamento apagados com sucesso!"
+    })
+
+@app.route("/atletas_chegaram", methods=["GET"])
+def atletas_chegaram():
+    server = r_json(path=SERVER_CONFIG_FILE_PATH)
+    response = requests.get(Helpers.mount_url("http", f"{server['server_ip']}:{server['port']}", "/dados_equipamento"))
+    dados = response.json()
+    idprova = dados.get('idprova')
+    equip = dados.get('equipamento')
+    db = Database()
+    results = db.executeQuery(f"SELECT DISTINCT * FROM tempos WHERE idprova = {idprova} AND idequipamento = {equip}")
+    return jsonify({
+        "status": "success",
+        "message": "",
+        "data": results
+    })
