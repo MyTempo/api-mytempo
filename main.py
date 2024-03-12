@@ -290,19 +290,19 @@ def iniciar_envio():
     
 # @app.route("/insert/tempos", methods=["POST"])
 # def insere_na_tabela():
+#     from ReaderData import ReaderData
+#     r = ReaderData()
 #     data = request.json  
 #     if data and "acao" in data:
 #         acao = data["acao"]
 #         if acao == "ligar":
-#             # r.toggleEnvio(True)
-            
-            
+#             r.toggleEnvio(True)
 #             return jsonify({
 #                 "status": "success",
 #                 "message": "Comunicando!"
 #             })
 #         elif acao == "desligar":
-#             # r.toggleEnvio(False)
+#             r.toggleEnvio(False)
 #             return jsonify({
 #                 "status": "success",
 #                 "message": "Comunicação pausada com sucesso!"
@@ -335,4 +335,65 @@ def atletas_chegaram():
         "status": "success",
         "message": "",
         "data": results
+    })
+
+@app.route("/deletar/arquivo/<string:type_f>/<string:session>", methods=['GET'])
+def deletar_arquivo(type_f, session):
+    Files = Intern()
+    file_txt = ""
+    tipo = 1
+    if(type_f == "bruto"):
+        tipo = 1
+    else:
+        tipo = 0
+    try:
+        file_txt = Files.searchFileBySession(session, type_f=tipo)    
+        if(file_txt is not None):
+            os.unlink(file_txt)
+            return jsonify({
+                'file_txt': file_txt,
+                'status': 'success',
+                'message': 'Sucesso ao apagar arquivo',
+                'erro': 0,
+                'considered_by': 'search_param'
+                })
+        else:
+            return jsonify({
+                'status': 'error',
+                'message': 'Não foi possível encontrar o arquivo',
+                'erro': 1,
+                'retornomsg': 'Arquivo não encontrado.',
+                'considered_by': 'search_param'
+
+            })
+        
+    except:
+        return jsonify({
+            'status': 'error',
+            'message': 'Ocorreu um erro crítico',
+            'erro': 1,
+            'retornomsg': 'Ocorreu um erro ao buscar arquivo.'
+        })
+    
+@app.route("/deletar/tudo/<string:type_f>", methods=['GET'])
+def deletar_todos_arquivos(type_f):
+    f = Intern() 
+    tipo = "brute" if type_f == "bruto" else "refined"
+    diretorios = f.listFilesDiff(type_f=tipo)
+    for d in diretorios:
+        caminho_arquivo = d["path"]
+        try:
+            os.unlink(caminho_arquivo)
+            print(f"O arquivo '{caminho_arquivo}' foi removido com sucesso.")
+        except FileNotFoundError:
+            print(f"O arquivo '{caminho_arquivo}' não existe.")
+        except Exception as e:
+            print(f"Erro ao tentar remover o arquivo '{caminho_arquivo}': {e}")
+
+    return jsonify({
+        'file_txt': diretorios[-1]["file"],
+        'status': 'success',
+        'message': 'Sucesso ao apagar arquivo',
+        'erro': 0,
+        'considered_by': 'search_param'
     })

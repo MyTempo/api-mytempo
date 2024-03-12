@@ -200,7 +200,7 @@ class ReaderData:
         
 
     def uploadPrimeirosTempos(self):
-        
+        print("está rodando corretamente")
         self.atletas = self.onlyAthleteNum(self.localDB.executeQuery(f"SELECT numero_atleta FROM atletas_da_prova WHERE id_prova = {self.equipamento['idprova']}"))
 
         self.h = Helpers()
@@ -264,19 +264,28 @@ class ReaderData:
             import traceback
             print(f"Erro: {e}")
             traceback.print_exc()
-  
 
-    def StartSendLoop(self):
+    def background_check(self):
         while True:
             if self.is_sending:
-                if self.send_thread is None or not self.send_thread.is_alive():
-                    self.send_thread = threading.Thread(target=self.uploadPrimeirosTempos)
-                    self.send_thread.start()
-            else:
-                if self.send_thread is not None and self.send_thread.is_alive():
-                    pass            
-            time.sleep(5)  
+                time.sleep(5)
 
+            if self.is_sending == False:
+                break
+
+    def StartSendLoop(self):
+        bg_thread = threading.Thread(target=self.background_check)
+        bg_thread.daemon = True  
+        bg_thread.start()
+
+        while True:
+            if self.is_sending:
+                send_thread = threading.Thread(target=self.uploadPrimeirosTempos)
+                send_thread.start()
+                send_thread.join() 
+            else:
+                pass
+            time.sleep(5)
     def toggleEnvio(self, estado):
         self.is_sending = estado 
 

@@ -55,7 +55,7 @@ class MyTempo:
                     }
 
     def emptyAthletesTable(self):
-        LocalDb = LocalDatabase(True)
+        LocalDb = LocalDatabase()
         LocalDb.executeNonQuery(f"DELETE FROM atletas_da_prova")       
 
     

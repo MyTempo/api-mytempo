@@ -1,11 +1,9 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
 from main import app
 from functions import w_json
 from MyTempo import *
 from config import *
 import socket
-
+import subprocess
 
 def get_local_ip_addr():
     try:
@@ -34,7 +32,13 @@ if __name__ == '__main__':
         w_json(f"{PATH_READER_DATA}/server.json", data)
         mt = MyTempo()
         mt.setIp(data["server_ip"], data['port'])
-        
+        # r = ReaderData()
+        # send_loop_thread = threading.Thread(target=r.StartSendLoop)
+        # send_loop_thread.start()
+
+        sys = f'{BASE_DIR}/start_reader.bat'
+        subprocess.Popen(sys, shell=True)
+
         app.run(host='0.0.0.0', port=data["port"])
         
     else:

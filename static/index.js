@@ -434,5 +434,38 @@ $(document).ready(function () {
     }
     
     setInterval(updateTable, 5000);
+
+   
+    
+
+    $(document).on("click", "#desligar-envio", function () {
+        $.ajax({
+            type: 'POST',
+            url: '/insert/tempos',
+            contentType: 'application/json',
+            data: JSON.stringify({"acao": "desligar"}),
+            success: function (response) {
+                showToast(response.status, response.message, 3000);
+            },
+            error: function (xhr, status, error) {
+                console.error('Erro na solicitação AJAX:', error);
+            }
+        });
+    });
+    
+    $(document).on("click", "#ativa-envio", function () {
+        $.ajax({
+            type: 'POST',
+            url: '/insert/tempos',
+            contentType: 'application/json',
+            data: JSON.stringify({"acao": "ligar"}),
+            success: function (response) {
+                showToast(response.status, response.message, 3000);
+            },
+            error: function (xhr, status, error) {
+                console.error('Erro na solicitação AJAX:', error);
+            }
+        });
+    });
 });
 
