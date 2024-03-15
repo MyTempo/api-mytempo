@@ -391,9 +391,9 @@ def deletar_todos_arquivos(type_f):
             print(f"Erro ao tentar remover o arquivo '{caminho_arquivo}': {e}")
 
     return jsonify({
-        'file_txt': diretorios[-1]["file"],
+        'last_file': diretorios[-1]["file"],
         'status': 'success',
-        'message': 'Sucesso ao apagar arquivo',
+        'message': 'Sucesso ao apagar todos os arquivos',
         'erro': 0,
         'considered_by': 'search_param'
     })

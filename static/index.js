@@ -13,6 +13,11 @@ $(document).ready(function () {
             }
             if (response.status_e == "success") {
                 $('.reader-name').html(response.modelo)
+                $(".id_equip").html(response.equipamento)
+                $(".id_prova").html(response.idprova)
+                $(".id_checkpoint").html(response.idcheck)
+                $(".prova_assoc").html(response.tituloprova)
+                $(".fabricante").html(response.fabricante)
                 atualizaEquipamento();
                 verifyStatus();
             }
@@ -129,7 +134,10 @@ $(document).ready(function () {
 
                 response.forEach(function (o) {
 
-                    let liElement = $('<li class="list-group-item btn" data-file="' + o.file + '" data-file_size="' + o.file_size + '" data-last_modify="' + o.last_modify + '" data-row_count="' + o.row_count + '" data-total_atletas="' + o.total_atletas + '" data-bs-toggle="modal" data-bs-target="#arquivoModal"></li>');
+                    let sessionNumber = extractSessionNumber(o.file);
+
+                    let liElement = $('<li class="list-group-item btn" data-file="' + o.file + '" data-session="' + sessionNumber + '" data-file_size="' + o.file_size + '" data-last_modify="' + o.last_modify + '" data-row_count="' + o.row_count + '" data-total_atletas="' + o.total_atletas + '" data-bs-toggle="modal" data-type="bruto" data-bs-target="#arquivoModal"></li>');
+
                     liElement.text(`${o.file}`);
                     ulElement.append(liElement);
 
@@ -152,8 +160,7 @@ $(document).ready(function () {
         var lastModify = button.data('last_modify');
         var totalAtletas = button.data('total_atletas');
         var qtdlinhas = button.data('row_count');
-
-
+        var sessionFile = button.data("session");
 
         var modal = $(this);
         modal.find('#fileId').text(fileId);
@@ -161,6 +168,8 @@ $(document).ready(function () {
         modal.find('#lastModify').text(lastModify);
         modal.find("#AtletasQtd").text(totalAtletas)
         modal.find("#linhasQtd").text(qtdlinhas)
+        modal.find("#deletar-arquivo-btn").data("file-session", sessionFile);
+
 
 
     });
@@ -175,8 +184,10 @@ $(document).ready(function () {
                 ulElement.empty();
 
                 response.forEach(function (o) {
+                    let sessionNumber = extractSessionNumber(o.file);
 
-                    let liElement = $('<li class="list-group-item btn" data-file="' + o.file + '" data-file_size="' + o.file_size + '" data-last_modify="' + o.last_modify + '" data-row_count="' + o.row_count + '" data-total_atletas="' + o.total_atletas + '" data-bs-toggle="modal" data-bs-target="#arquivoModal"></li>');
+                    let liElement = $('<li class="list-group-item btn" data-file="' + o.file + '" data-session="' + sessionNumber + '" data-file_size="' + o.file_size + '" data-last_modify="' + o.last_modify + '" data-row_count="' + o.row_count + '" data-total_atletas="' + o.total_atletas + '" data-bs-toggle="modal" data-type="refinado"  data-bs-target="#arquivoModal"></li>');
+
                     liElement.text(`${o.file}`);
                     ulElement.append(liElement);
 
@@ -199,7 +210,8 @@ $(document).ready(function () {
         var lastModify = button.data('last_modify');
         var totalAtletas = button.data('total_atletas');
         var qtdlinhas = button.data('row_count');
-
+        var sessionFile = button.data("session");
+        var arqType = button.data("type")
 
 
         var modal = $(this);
@@ -208,6 +220,22 @@ $(document).ready(function () {
         modal.find('#lastModify').text(lastModify);
         modal.find("#AtletasQtd").text(totalAtletas)
         modal.find("#linhasQtd").text(qtdlinhas)
+        modal.find("#deletar-arquivo-btn").attr("data-file-session", sessionFile);
+
+        $(document).on('click', "#deletar-arquivo-btn", function () {
+            console.log(sessionFile)
+            $.ajax({
+                type: 'GET',
+                url: `/deletar/arquivo/${arqType}/${sessionFile}`,
+                contentType: 'application/json',
+                success: function (response) {
+                    showToast(response.status, response.message, 3000);
+                },
+                error: function (xhr, status, error) {
+                    console.error('Erro na solicitação AJAX:', error);
+                }
+            });
+        })
 
 
     });
@@ -237,7 +265,7 @@ $(document).ready(function () {
                     $(".comunicando").html(`<i class="fa-solid fa-arrow-right-arrow-left"></i> A leitura está em andamento`)
                     $(".comunicacao-status").removeClass("disconnected")
                     $(".comunicacao-status").addClass("connected")
-                    // document.getElementById("iniciar-leitura").removeAttribute("disabled");
+
                     let tags = response.data.data.taginfo;
                     let tableBody = $(".info-table");
                     tableBody.empty();
@@ -337,7 +365,7 @@ $(document).ready(function () {
     function startCommunication() {
         if (!intervalId) {
             $("#iniciar-comunicacao").prop("disabled", true);
-            intervalId = setInterval(function() {
+            intervalId = setInterval(function () {
                 $.ajax({
                     type: 'POST',
                     url: '/iniciar/comunicacao/',
@@ -353,7 +381,7 @@ $(document).ready(function () {
             }, 5000);
         }
     }
-    
+
     function pauseCommunication() {
         clearInterval(intervalId);
         intervalId = null;
@@ -362,7 +390,7 @@ $(document).ready(function () {
             type: 'POST',
             url: '/insert/tempos',
             contentType: 'application/json',
-            data: JSON.stringify({"acao": "desligar"}),
+            data: JSON.stringify({ "acao": "desligar" }),
             success: function (response) {
                 showToast(response.status, response.message, 3000);
             },
@@ -371,11 +399,11 @@ $(document).ready(function () {
             }
         });
     }
-    
+
     $(document).on("click", "#iniciar-comunicacao", function () {
         startCommunication();
     });
-    
+
     $(document).on("click", "#pausar-comunicacao", function () {
         pauseCommunication();
     });
@@ -395,9 +423,11 @@ $(document).ready(function () {
     });
     $(document).on("click", ".mostrar-atletas", function () {
         $(".mostrar-atletas-card").removeClass("d-none");
+        $(".mostrar-atletas").addClass("esconder");
+        $(".mostrar-atletas").text("Esconder Atletas")
         updateTable();
     });
-    
+
     function updateTable() {
         $.ajax({
             type: 'GET',
@@ -432,18 +462,18 @@ $(document).ready(function () {
             }
         });
     }
-    
+
     setInterval(updateTable, 5000);
 
-   
-    
+
+
 
     $(document).on("click", "#desligar-envio", function () {
         $.ajax({
             type: 'POST',
             url: '/insert/tempos',
             contentType: 'application/json',
-            data: JSON.stringify({"acao": "desligar"}),
+            data: JSON.stringify({ "acao": "desligar" }),
             success: function (response) {
                 showToast(response.status, response.message, 3000);
             },
@@ -452,13 +482,13 @@ $(document).ready(function () {
             }
         });
     });
-    
+
     $(document).on("click", "#ativa-envio", function () {
         $.ajax({
             type: 'POST',
             url: '/insert/tempos',
             contentType: 'application/json',
-            data: JSON.stringify({"acao": "ligar"}),
+            data: JSON.stringify({ "acao": "ligar" }),
             success: function (response) {
                 showToast(response.status, response.message, 3000);
             },
@@ -466,6 +496,40 @@ $(document).ready(function () {
                 console.error('Erro na solicitação AJAX:', error);
             }
         });
+    });
+
+    $(document).on('click', ".apagar-todos-brutos", function() {
+        $.ajax({
+            type: 'GET',
+            url: `/deletar/tudo/bruto`,
+            contentType: 'application/json',
+            success: function (response) {
+                showToast(response.status, response.message, 3000);
+            },
+            error: function (xhr, status, error) {
+                console.error('Erro na solicitação AJAX:', error);
+            }
+        });
+    });
+
+    $(document).on('click', ".apagar-todos-refinados", function() {
+        $.ajax({
+            type: 'GET',
+            url: `/deletar/tudo/refinado`,
+            contentType: 'application/json',
+            success: function (response) {
+                showToast(response.status, response.message, 3000);
+            },
+            error: function (xhr, status, error) {
+                console.error('Erro na solicitação AJAX:', error);
+            }
+        });
+    });
+
+    $(document).on("click", ".esconder", function(e) {
+        $(".mostrar-atletas").removeClass("esconder")
+        $(".mostrar-atletas-card").addClass("d-none");
+        $(".mostrar-atletas").text("Mostrar atletas enviados")
     });
 });
 

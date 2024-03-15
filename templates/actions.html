@@ -10,7 +10,7 @@
                             <button type="button" id="iniciar-leitura" class="btn btn-primary">Iniciar leitura</button>
                         </li>
                         <li class="mb-2">
-                            <button type="button" id="parar-leitura" class="btn btn-primary">Parar leitura</button>
+                            <button type="button" id="parar-leitura" class="btn btn-primary">Pausar leitura</button>
                         </li>
                         <li class="mb-2">
                             <button type="button" id="pegar-primeiros-tempos" class="btn btn-primary">Refinar último arquivo</button>
@@ -48,6 +48,7 @@
                             data-bs-toggle="collapse" data-bs-target="#brutos" aria-expanded="false"
                             aria-controls="brutos">
                             <strong>Exibir arquivos brutos</strong>
+                            <button class="btn btn-danger apagar-todos-brutos">Apagar Todos arquivos</button>
                         </button>
                     </p>
                     <div class="collapse" id="brutos">
@@ -71,6 +72,8 @@
                             type="button" data-bs-toggle="collapse" data-bs-target="#refinados" aria-expanded="false"
                             aria-controls="brutos">
                             <strong>Exibir arquivos refinados</strong>
+                            <button class="btn btn-danger apagar-todos-refinados">Apagar Todos arquivos </button>
+
                         </button>
                     </p>
                     <div class="collapse" id="refinados">
@@ -170,7 +173,8 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                <button type="button" class="btn btn-primary">Salvar Mudanças</button>
+                <button type="button" class="btn btn-danger" id="deletar-arquivo-btn" data-file-session="">Apagar arquivo</button>
+                <!-- <button type="button" class="btn btn-primary">Salvar Mudanças</button> -->
             </div>
         </div>
     </div>

@@ -60,4 +60,21 @@ class MyTempo:
 
     
 
+    def getPercursos(idprova):
+        msg = True
+        db = Database(msg)
+        localdb = LocalDatabase(msg)
 
+        for data in db.executeQuery("SELECT idprova, descricaop, km, horalargada, fimlargada, emlargada FROM percurso WHERE idprova = 163"):
+            for i in data:
+                print(i)
+                
+            print("-=" * 100)        
+            query = f"INSERT INTO percursos(idprova, descricaop, km, horalargada, fimlargada, tempo_em_largada) VALUES ({data[0]}, {data[1]}, {data[2]}, {data[3]}, {data[4]}, {data[5]})", 
+
+            localdb.executeNonQuery(query)
+
+
+m = MyTempo()
+
+r = m.getPercursos()

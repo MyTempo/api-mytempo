@@ -4,6 +4,7 @@ from MyTempo import *
 from config import *
 import socket
 import subprocess
+from system import Process
 
 def get_local_ip_addr():
     try:
@@ -32,13 +33,12 @@ if __name__ == '__main__':
         w_json(f"{PATH_READER_DATA}/server.json", data)
         mt = MyTempo()
         mt.setIp(data["server_ip"], data['port'])
+        process = Process(f"{BASE_DIR}/start_reader.bat")
+        process.start_process()
         # r = ReaderData()
-        # send_loop_thread = threading.Thread(target=r.StartSendLoop)
-        # send_loop_thread.start()
 
-        sys = f'{BASE_DIR}/start_reader.bat'
-        subprocess.Popen(sys, shell=True)
-
+          
+  
         app.run(host='0.0.0.0', port=data["port"])
         
     else:

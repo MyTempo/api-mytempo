@@ -127,13 +127,24 @@ function fecharOverlay() {
 
     setTimeout(function () {
         overlay.style.display = 'none';
-        // Remover a caixa de diálogo após fechar
+        
         document.body.removeChild(overlay);
     }, 300);
 }
 
 function confirmarDelecao() {
-    // Código para deletar o item
+    
     alert("Item deletado com sucesso!");
-    // Não é necessário chamar fecharOverlay() aqui, pois já é chamado pela função de deletar
+    
+}
+function extractSessionNumber(filename) {
+    let regex = /-Sess-(\d{3})/;
+    
+    let match = regex.exec(filename);
+    
+    if (match) {
+        return match[1];  
+    } else {
+        return "";  
+    }
 }

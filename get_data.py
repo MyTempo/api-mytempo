@@ -14,15 +14,15 @@ class GetWebData:
 
         try:
             data_equip = {"nome_equipamento": reader_name}
-            # print(data_equip)
             response = requests.post(url=url, json=data_equip)
-
+            print(response.text)
             if response.status_code == 200:
                 updated_data = response.json()
                 e = updated_data[0]
                 try:
                     with open(READER_CONFIG_FILE_PATH, 'r') as arquivo:
                         dados = json.load(arquivo)
+                       
                         
                         dados["data_prova"] = e.get("dataprova")
                         dados["descricao_check"] = e.get("descricao_check")

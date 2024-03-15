@@ -38,7 +38,8 @@ class ReaderData:
         self.atletas = []
         self.atletas_tempos = []
         self.is_sending = False
-
+        self.tempos = {}
+        self.primeiros_tempos_minerados = []
     def ReaderStatus(self):
        
         res = dict()
@@ -173,10 +174,11 @@ class ReaderData:
                         tempos[numero_atleta] = [tempo_atleta]
 
                 for numero_atleta, lista_tempos in tempos.items():
+                    print(tempos)
                     tempos = {
                         "session": self.session, 
                         "atleta": numero_atleta,
-                        "primeiro_tempo": lista_tempos[0],
+                        "primeiro_tempo": lista_tempos,
                         "idprova": self.equipamento["idprova"],
                         "id_equipamento": self.equipamento["equipamento"],
                         "id_checkpoint": self.equipamento['idcheck'],
@@ -200,7 +202,6 @@ class ReaderData:
         
 
     def uploadPrimeirosTempos(self):
-        print("está rodando corretamente")
         self.atletas = self.onlyAthleteNum(self.localDB.executeQuery(f"SELECT numero_atleta FROM atletas_da_prova WHERE id_prova = {self.equipamento['idprova']}"))
 
         self.h = Helpers()
@@ -219,7 +220,6 @@ class ReaderData:
             output_file.writelines(lines_without_letters)
 
         tempos = {}    
-
         try:
             r_file = Intern()
             most_recent_file_path = r_file.getMostRecentFileModified(PATH_BRUTE_DATA)
@@ -238,28 +238,31 @@ class ReaderData:
                     
                     if numero_atleta not in tempos:
                         tempos[numero_atleta] = [tempo_atleta]
-         
-                for numero_atleta, lista_tempos in tempos.items():
-                    self.upload.primeirosTempos(self.equipamento['idprova'], self.equipamento['idcheck'], self.equipamento['equipamento'], numero_atleta, lista_tempos[0], antena=0, local=self.equipamento['identificacao'], entrada=2, idstaff=9)
                     
-                db = Database()
-                db.conn = mysql.connector.connect(
-                host=db.host,
-                user=db.user,
-                password=db.password,
-                database=db.database
-                )
+              
+                for numero_atleta, lista_tempos in tempos.items():
+                  
+                    print(f"{numero_atleta} tempo: {lista_tempos}")
+                       
+                    
+                # db = Database()
+                # db.conn = mysql.connector.connect(
+                # host=db.host,
+                # user=db.user,
+                # password=db.password,
+                # database=db.database
+                # )
 
-                if db.conn.is_connected():
-                    cursor = db.conn.cursor()
+                # if db.conn.is_connected():
+                #     cursor = db.conn.cursor()
 
-                    for q in self.upload.atletas_enviados: 
-                        cursor.execute(q)
+                #     for q in self.upload.atletas_enviados: 
+                #         cursor.execute(q)
 
-                    cursor.close()
-                    db.conn.commit()
-                    db.conn.close()
-                return {"message": "sucesso!"}
+                #     cursor.close()
+                #     db.conn.commit()
+                #     db.conn.close()
+                # return {"message": "sucesso!"}
         except Exception as e:
             import traceback
             print(f"Erro: {e}")
@@ -446,4 +449,162 @@ class ReaderData:
         except Exception as e:
             print(e)    
 
+    def readFiles(self):
+        try:
+            r_file = Intern()
+            most_recent_file_path = r_file.getMostRecentFileModified(PATH_BRUTE_DATA)
+            
+            with open(most_recent_file_path) as arq:
 
+                rows = arq.read().splitlines()
+
+         
+                for row in rows:
+              
+                    self.session = str(row[0:3])
+                    numero_atleta = int(row[23:27])
+                    tempo_atleta = str(row[27:])
+
+                    self.tempos.setdefault(numero_atleta, []).append(tempo_atleta)
+
+        except FileNotFoundError:
+            print("Arquivo não encontrado")
+        except ValueError:
+                print("Erro ao ler o arquivo: valor inválido encontrado")
+
+        self.tempos = self.tempos
+        return self.tempos
+
+    def getLastTime(self):
+        try:
+            conn = sqlite3.connect(DB_PATH)
+            cursor = conn.cursor()
+            query = """ CREATE TABLE IF NOT EXISTS tempos_first (
+                        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        atleta TEXT,
+                        tempo TEXT
+                    );"""
+            cursor.execute(query)
+            print('Tabela criada com sucesso!')
+
+            lista = []
+            tempos = self.readFiles()
+            print(tempos)
+            for numero_atleta, lista_tempos in tempos.items():
+                for tempo in lista_tempos:
+                    cursor.execute("INSERT INTO tempos_first (atleta, tempo) VALUES (?, ?)",
+                                    (numero_atleta, tempo))
+
+            query = cursor.execute(f"""
+                                SELECT atleta, tempo
+                                FROM (
+                                        SELECT atleta, tempo,
+                                            ROW_NUMBER() OVER (PARTITION BY atleta ORDER BY tempo DESC) AS row_num
+                                        FROM tempos_first
+                                    ) ranked
+                                    WHERE row_num = 1;
+
+                                """)
+            rows = cursor.fetchall()
+            cursor.execute('DROP TABLE tempos_first')
+            print("Tabela apagada com sucesso!")
+            conn.close()
+            for temps in rows:
+                self.ultimos_tempos_minerados.append(temps)
+
+            return self.ultimos_tempos_minerados
+        except conn as e:
+            print("Erro ")
+
+    def getFirstTime(self, tempo_prova):
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        query = """ CREATE TABLE IF NOT EXISTS tempos_first (
+                    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                    atleta TEXT,
+                    tempo TEXT
+                );"""
+        cursor.execute(query)
+        print('Tabela criada com sucesso!')
+
+        lista = []
+        tempos = self.readFiles()
+        print(tempos)
+        for numero_atleta, lista_tempos in tempos.items():
+            for tempo in lista_tempos:
+                cursor.execute("INSERT INTO tempos_first (atleta, tempo) VALUES (?, ?)",
+                                (numero_atleta, tempo))
+
+        query = cursor.execute(f"""
+                                SELECT atleta, MIN(tempo) AS menor_tempo
+                                FROM tempos_first
+                                WHERE TIME(tempo) >= TIME('{tempo_prova}')
+                                GROUP BY atleta;
+                               """)
+        rows = cursor.fetchall()
+        cursor.execute('DROP TABLE tempos_first')
+        print("Tabela apagada com sucesso!")
+        conn.close()
+        for temps in rows:
+            self.primeiros_tempos_minerados.append(temps)
+        # print('  atleta   |   tempos')
+
+        # for t in self.primeiros_tempos_minerados:
+        #     print(t)
+        print(self.primeiros_tempos_minerados)
+    
+        return self.primeiros_tempos_minerados
+        
+    def getCompressedDataAll(self):
+        self.h = Helpers()
+        self.h.created_at = TIME_FORMAT_1 
+        r_file = Intern()
+        most_recent_file_path = r_file.getMostRecentFileModified(PATH_BRUTE_DATA)
+        
+        with open(most_recent_file_path, 'r') as file:
+            lines = file.readlines()
+        
+        unique_lines = list(dict.fromkeys(lines))
+        
+        lines_without_letters = [line for line in unique_lines if not re.search('[a-zA-Z]', line)]
+    
+        with open(most_recent_file_path, 'w') as output_file:
+            output_file.writelines(lines_without_letters)
+
+        try:
+            r_file = Intern()
+            most_recent_file_path = r_file.getMostRecentFileModified(PATH_BRUTE_DATA)
+            
+            with open(most_recent_file_path) as arq:
+
+                rows = arq.read().splitlines()
+
+         
+                for row in rows:
+              
+                    self.session = str(row[0:3])
+                    numero_atleta = int(row[23:27])
+                    tempo_atleta = str(row[27:])
+
+                    self.tempos.setdefault(numero_atleta, []).append(tempo_atleta)
+
+        except FileNotFoundError:
+            print("Arquivo não encontrado")
+        except ValueError:
+                print("Erro ao ler o arquivo: valor inválido encontrado")
+
+        self.tempos = self.tempos
+        return self.tempos
+
+
+    def processaArquivoInteiro(self):
+        pass    
+
+
+R = ReaderData()
+
+tempos = R.getCompressedDataAll()
+for numero_atleta, lista_tempos in tempos.items():
+    # print(f"atleta {numero_atleta}: {lista_tempos}")
+    for n in lista_tempos:
+        print(f"Tempo do atleta {numero_atleta}: {n}")

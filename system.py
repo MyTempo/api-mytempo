@@ -1,7 +1,8 @@
 from config import *
 import requests
-from flask import Blueprint, jsonify
-
+from flask import jsonify
+import subprocess
+import psutil
 import json
 
 class System:
@@ -55,5 +56,27 @@ class System:
                 }
         print(res)
         return jsonify(res)
+
+
+class Process:
+    def __init__(self, process_path):
+        self.process_path = process_path
+        self.process = None
+
+    def start_process(self):
+        if self.process is None or self.process.poll() is not None:
+            self.process = subprocess.Popen(self.process_path, shell=True)
+            print("Processo iniciado com sucesso.")
+        else:
+            print("O processo já está em execução.")
+
+            
     
-    
+    def stop_process(self):
+        if self.process and self.process.poll() is None:
+            pid = self.process.pid
+            p = psutil.Process(pid)
+            p.terminate()
+            print("Processo interrompido com sucesso.")
+        else:
+            print("Não há nenhum processo em execução para interromper.")
