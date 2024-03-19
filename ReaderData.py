@@ -601,10 +601,10 @@ class ReaderData:
         pass    
 
 
-R = ReaderData()
+# R = ReaderData()
 
-tempos = R.getCompressedDataAll()
-for numero_atleta, lista_tempos in tempos.items():
-    # print(f"atleta {numero_atleta}: {lista_tempos}")
-    for n in lista_tempos:
-        print(f"Tempo do atleta {numero_atleta}: {n}")
+# tempos = R.getCompressedDataAll()
+# for numero_atleta, lista_tempos in tempos.items():
+#     # print(f"atleta {numero_atleta}: {lista_tempos}")
+#     for n in lista_tempos:
+#         print(f"Tempo do atleta {numero_atleta}: {n}")

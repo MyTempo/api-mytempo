@@ -117,6 +117,6 @@ class Intern:
             files = self.listFiles(PATH_REF_DATA)
         else:
             return None
-        print(files)
+  
         return files
 

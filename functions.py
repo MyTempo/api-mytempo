@@ -38,3 +38,12 @@ def sanitizeTimeInput(calculo):
         return calculo
     except Exception as e:
         print(f"Erro ao formatar tempo: err -> {e}")
+
+
+def formatar_tempo(delta):
+    if delta is None:
+        return None
+    
+    horas, segundos = divmod(delta.seconds, 3600)
+    minutos, segundos = divmod(segundos, 60)
+    return '{:02}:{:02}:{:02}'.format(horas, minutos, segundos)

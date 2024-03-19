@@ -1,6 +1,13 @@
 import sqlite3
 from config import *
 
+
+class CustomObject:
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+
 class LocalDatabase:
     def __init__(self, messages=False) -> None:
         self.db_file = DB_PATH
@@ -14,7 +21,7 @@ class LocalDatabase:
             "errors": "",
             "has_changed": ""
         }
-        print(DB_PATH)
+
     def connect(self):
         try:
             self.conn = sqlite3.connect(self.db_file)
@@ -28,12 +35,21 @@ class LocalDatabase:
             if self.messages:
                 print("Erro ao conectar ao banco de dados:", e)
 
-    def executeQuery(self, query):
+    def executeQuery(self, query, return_as_object=False):
         try:
             self.connect()
             self.cursor = self.conn.cursor()
             self.cursor.execute(query)
-            self.results = self.cursor.fetchall()
+            columns = [column[0] for column in self.cursor.description]
+            results = []
+            for row in self.cursor.fetchall():
+                if return_as_object:
+                    # Criar objetos personalizados para cada linha
+                    result_object = CustomObject(**dict(zip(columns, row)))
+                else:
+                    result_object = row
+                results.append(result_object)
+            self.results = results
             self.info['affected_rows'] = len(self.results)
             self.info['query'] = query
             self.info['status'] = "success"
@@ -48,7 +64,7 @@ class LocalDatabase:
             return None
         finally:
             self.closeConnection()
-
+            
     def executeNonQuery(self, query):
         try:
             self.connect()
@@ -70,6 +86,13 @@ class LocalDatabase:
             return None
         finally:
             self.closeConnection()
+
+    def OnlyExecute(self, query):
+        self.connect()
+        self.cursor = self.conn.cursor()
+        self.cursor.execute(query)
+        self.conn.commit()
+        self.closeConnection()
 
     def closeConnection(self):
         if self.conn:

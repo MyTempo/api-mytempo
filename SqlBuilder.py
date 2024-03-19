@@ -1,5 +1,8 @@
 class SQLQueryBuilder:
     def __init__(self):
+        self.reset()
+
+    def reset(self):
         self.query_type = None
         self.columns = None
         self.table = None
@@ -14,10 +17,9 @@ class SQLQueryBuilder:
         self.columns = ", ".join(columns)
         return self
 
-    def Insert(self, table, **values):
+    def Insert(self, table):
         self.query_type = "INSERT"
         self.table = table
-        self.set_values = values
         return self
 
     def Update(self, table):
@@ -58,9 +60,12 @@ class SQLQueryBuilder:
         if self.query_type == "SELECT":
             query = f"SELECT {self.columns} FROM {self.table}"
         elif self.query_type == "INSERT":
-            query = f"INSERT INTO {self.table} ({', '.join(self.set_values.keys())}) VALUES ({', '.join(['%s']*len(self.set_values))})"
+            columns = ', '.join(self.set_values.keys())
+            values = ', '.join([f"{key}={self.set_values[key]}" for key in self.set_values.keys()])
+            query = f"INSERT INTO {self.table} ({columns}) VALUES ({values})"
         elif self.query_type == "UPDATE":
-            query = f"UPDATE {self.table} SET {', '.join([f'{key}=%s' for key in self.set_values.keys()])}"
+            values = ', '.join([f"{key}={self.set_values[key]}" for key in self.set_values.keys()])
+            query = f"UPDATE {self.table} SET {values}"
         elif self.query_type == "DELETE":
             query = f"DELETE FROM {self.table}"
 
@@ -75,8 +80,4 @@ class SQLQueryBuilder:
         if self.limit:
             query += f" LIMIT {self.limit}"
 
-        if self.query_type == "UPDATE":
-            query += " WHERE " + " AND ".join([f'{key}=%s' for key in self.set_values.keys()])
-
         return query
-
