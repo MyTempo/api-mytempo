@@ -2,7 +2,6 @@ from config import *
 from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS  
 import requests
-
 from system import System
 from get_data import GetWebData
 from readfiles import Intern
@@ -41,8 +40,8 @@ def atualiza_equipamento():
     sys = System()
     upd_eqp = GetWebData()
     equip_info_response = sys.getEquipInfo()
-    equip_info_data = json.loads(equip_info_response)  # Converte a string JSON em um objeto Python
-    equip_model = equip_info_data.get("modelo")  # Acessa a chave "modelo" nos dados JSON
+    equip_info_data = json.loads(equip_info_response)  
+    equip_model = equip_info_data.get("modelo") 
 
     result = upd_eqp.update_equip(equip_model, URL_DADOS_EQUIPAMENTO)
 
