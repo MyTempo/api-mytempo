@@ -2,6 +2,7 @@ import json
 import subprocess
 import sys
 import os
+from datetime import datetime, timedelta
 
 def w_json(path, dados):
     with open(path, 'w') as arquivo:
@@ -47,3 +48,13 @@ def formatar_tempo(delta):
     horas, segundos = divmod(delta.seconds, 3600)
     minutos, segundos = divmod(segundos, 60)
     return '{:02}:{:02}:{:02}'.format(horas, minutos, segundos)
+
+def sum_time(tempo_inicial_str, intervalo_str):
+    tempo_inicial = datetime.strptime(tempo_inicial_str, "%H:%M:%S")
+    intervalo_tempo = timedelta(hours=intervalo_str.split(':')[0], minutes=intervalo_str.split(':')[1], seconds=intervalo_str.split(':')[2])
+
+    tempo_final = tempo_inicial + intervalo_tempo
+    
+    tempo_final_str = tempo_final.strftime("%H:%M:%S")
+    
+    return tempo_final_str

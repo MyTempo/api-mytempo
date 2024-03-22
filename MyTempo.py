@@ -26,7 +26,7 @@ class MyTempo:
                         result = db.executeNonQuery(update)
                         if result['status'] == "success":
                             self.emptyAthletesTable()
-                            # self.GetAthletes()
+                            
                             return "Equipamento iniciado e configurado com sucesso!"
             except FileNotFoundError as e:
                 print("Falha ao configurar servidor remoto: -> ", e)
@@ -64,15 +64,14 @@ class MyTempo:
     def getPercursos(self, idprova):
         msg = True
         db = Database(msg)
-        localdb = LocalDatabase(msg)
         qb = SQLQueryBuilder()
         
         percursos = qb.Select("idprova, descricaop, km, horalargada, fimlargada, emlargada, tempochecada").From("percurso").Where(f"idprova = {int(idprova)}").Build()
         
-        for data in db.executeQuery(percursos, return_as_object=True):
-
-            query = f"INSERT INTO percursos (idprova, descricaop, km, horalargada, fimlargada, tempo_em_largada, tempo_chegada) VALUES ({data.idprova}, '{data.descricaop}', '{data.km}', '{data.horalargada}', '{data.fimlargada}', '{data.emlargada}', '{data.tempochecada}');"
-
+        with LocalDatabase(msg) as localdb:
+            for data in db.executeQuery(percursos, return_as_object=True):
+                query = f"INSERT INTO percursos (idprova, descricaop, km, horalargada, fimlargada, tempo_em_largada, tempo_chegada) VALUES ({data.idprova}, '{data.descricaop}', '{data.km}', '{data.horalargada}', '{data.fimlargada}', '{data.emlargada}', '{data.tempochecada}');"
+                localdb.executeNonQuery(query)
 
             localdb.executeNonQuery(query)
 
@@ -98,13 +97,12 @@ class MyTempo:
             offquery = f"INSERT INTO atletas_da_prova(numero_atleta, id_prova) VALUES ('{atleta}', '{id_prova}')"
             self.localdb.executeNonQuery(offquery)
              
-    def MainProcess():
+    def MainProcess() -> None:
         from ReaderData import ReaderData
         from readfiles import Intern
         
         tempos = {}
-        tempos_do_atleta = {}
-
+        
         if os.path.exists(READER_CONFIG_FILE_PATH):
             equip_dados = r_json(READER_CONFIG_FILE_PATH)
         
@@ -115,39 +113,41 @@ class MyTempo:
         helpers.created_at = TIME_FORMAT_1 
         horaLargadaOficial = []
         tempoMinimoChegada = []
-
-        queryPercursos = qb.Select("horalargada, fimlargada, tempo_em_largada, tempo_chegada").From("percursos").Build()
-     
+        horaLargada_ = []
+        tempoChegada = []
+        
+        queryPercursos = qb.Select("horalargada, fimlargada, tempo_em_largada, tempo_chegada").From("percursos").Where("horalargada IS NOT NULL AND fimlargada IS NOT NULL").Build()
         percursosTempos = localdb.executeQuery(queryPercursos, return_as_object=True)
 
         for percursoI in percursosTempos:
             if percursoI and percursoI.horalargada and percursoI.fimlargada:
                 tempo_str = percursoI.horalargada
                 chegada_str = percursoI.fimlargada
-           
+            
                 if percursoI.tempo_em_largada is not None and isinstance(percursoI.tempo_em_largada, str) and percursoI.tempo_em_largada.isdigit():
                     try:
-                        if percursoI.fimlargada is not None and isinstance(percursoI.fimlargada, str) and percursoI.tempo_em_largada.isdigit():
-                            chegada_datetime = datetime.strptime(chegada_str, '%H:%M:%S')
-                        
-                            chegada_formatada = chegada_datetime.strftime('%H:%M:%S')
-                            tempoMinimoChegada.append(chegada_formatada)
+                        if percursoI.fimlargada is not None and isinstance(percursoI.fimlargada, str):
+                            chegada_datetime = datetime.strptime(percursoI.fimlargada, '%H:%M:%S')
+                            duracao_chegada = datetime.strptime(percursoI.tempo_chegada, '%H:%M:%S') - datetime.min
+                            chegada_formatada = chegada_datetime + duracao_chegada
+                            tempoMinimoChegada.append(chegada_formatada.strftime('%H:%M:%S'))
+
+                            if percursoI.tempo_chegada is not None and isinstance(percursoI.tempo_chegada, str):
+                                tempoChegada.append(percursoI.tempo_chegada)
                     except ValueError as e:
                         pass
-
                     try:
                         minutos_adicionais = int(percursoI.tempo_em_largada)
                         tempo_datetime = datetime.strptime(tempo_str, '%H:%M:%S') + timedelta(minutes=minutos_adicionais)
+                        horaLargada_.append(tempo_str)
                         horaLargadaOficial.append(tempo_datetime.strftime('%H:%M:%S'))
-                      
                     except ValueError as e:
                         pass
                 else:
                     print("Valor inválido para tempo_em_largada.")
-                    
             else:
                 print("Valor de horalargada ausente ou inválido.")
-       
+    
         r_file = Intern()
         most_recent_file_path = r_file.getMostRecentFileModified(PATH_BRUTE_DATA)
         
@@ -157,37 +157,45 @@ class MyTempo:
         unique_lines = list(dict.fromkeys(lines))
         
         lines_without_letters = [line for line in unique_lines if not re.search('[a-zA-Z]', line)]
+ 
+        
         for row in lines_without_letters:
             session = str(row[0:3])
             numero_atleta = int(row[23:27])
             tempo_atleta = str(row[27:])
-
             tempos.setdefault(numero_atleta, []).append(tempo_atleta)
 
+        tempos_atletas = {}
+    
         for numero_atleta, lista_tempos in tempos.items():
-            for horaLargada, MinEmchegada in zip(horaLargadaOficial, tempoMinimoChegada):
-                ultimo_tempo_antes_largada = None
+                    
+            tempos_atletas.setdefault(numero_atleta, {'largada': [], 'chegada': []})
+
+            for horaLargada, MinEmchegada, horaLargada_ofc in zip(horaLargadaOficial, tempoMinimoChegada, horaLargada_):
+                largada_atleta = None
                 tempo_chegada = None
-                encontrou_tempo_apos_min = False  # Variável de sinalização
 
                 for tempo in lista_tempos:
                     try:
-                        if tempo <= horaLargada:
-                            ultimo_tempo_antes_largada = tempo
-
+                        if tempo >= horaLargada_ofc and tempo <= horaLargada:
+                            largada_atleta = tempo
                         if tempo >= horaLargada and tempo >= MinEmchegada:
-                            if not encontrou_tempo_apos_min:  # Verifica se já encontrou um tempo após MinEmchegada
-                                tempo_chegada = tempo
-                                encontrou_tempo_apos_min = True  # Define a variável de sinalização como True
+                            tempo_chegada = tempo
                     except ValueError:
                         print(f"O tempo {tempo} não está no formato correto e será ignorado.")
-                
-                if ultimo_tempo_antes_largada is not None:
-                    tempos_do_atleta.setdefault(numero_atleta, []).append(ultimo_tempo_antes_largada)
-                if tempo_chegada is not None:
-                    tempos_do_atleta.setdefault(numero_atleta, []).append(tempo_chegada)
 
-        print(tempos_do_atleta)
+                if largada_atleta is not None:
+                    tempos_atletas[numero_atleta]['largada'].append(largada_atleta)
+                if tempo_chegada is not None:
+                    tempos_atletas[numero_atleta]['chegada'].append(tempo_chegada)
+                 
+        for t in tempos_atletas.items():
+            print(f"{t[0]}")
+
+ 
 m = MyTempo()
+
+# m.emptyGetPercursos()
 # m.getPercursos(163)
 print(MyTempo.MainProcess())
+print(MyTempo.getPercursos('113'))

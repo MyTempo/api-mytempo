@@ -21,7 +21,22 @@ class LocalDatabase:
             "errors": "",
             "has_changed": ""
         }
+    def __enter__(self):
+        self.connect()
+        return self
 
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.closeConnection()
+
+    def open_connection(self):
+        try:
+            self.conn = sqlite3.connect(self.db_file)
+            if self.messages:
+                print("Conexão estabelecida com sucesso.")
+        except Exception as e:
+            if self.messages:
+                print("Erro ao conectar ao banco de dados:", e)
+                
     def connect(self):
         try:
             self.conn = sqlite3.connect(self.db_file)
