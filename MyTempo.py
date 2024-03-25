@@ -33,17 +33,30 @@ class MyTempo:
 
     def verifyDB(self):
         return os.path.exists(DB_PATH)
-
+    
+    def mountAthleteData(atleta="", tempo="", antena=0, local="", entrada=0, idstaff=9):
+        if os.path.exists(READER_CONFIG_FILE_PATH):
+            try:
+                equipamento = r_json(READER_CONFIG_FILE_PATH)
+         
+                tempo_atleta = f"{datetime.now().date()} {tempo}"
+                calculo = sanitizeTimeInput(tempo_atleta)
+                query = f"INSERT INTO tempos (idprova, idcheck, idequipamento, numero, tempo, calculo, antena, local, entrada, idstaff) VALUES ({equipamento['idprova']}, {equipamento['idcheck']}, '{equipamento["equipamento"]}', {atleta}, '{tempo_atleta}', '{calculo}', {antena}, '{local}', {entrada}, {idstaff})"
+                return query
+            except Exception as e:
+                print(f"erro ao montar query: -> {e}")
+    
+                
     def GetAthletes(self):
-        db = Database()
+        db = Database(True)
         LocalDb = LocalDatabase(True)
         if os.path.exists(READER_CONFIG_FILE_PATH):
             try:
                 equipamento = r_json(READER_CONFIG_FILE_PATH)
-                results = db.executeQuery(f"SELECT numero, nome, sexo, equipe FROM atletas WHERE idprova = {equipamento['idprova']}")
+                results = db.executeQuery(f"SELECT numero, nome, sexo, equipe, percurso FROM atletas WHERE idprova = {equipamento['idprova']}")
                 
                 for r in results:
-                    LocalDb.executeNonQuery(f"INSERT INTO atletas_da_prova(numero_atleta, id_prova, nome, sexo, equipe) VALUES ({int(r[0])}, {int(equipamento['idprova'])}, '{r[1]}', '{r[2]}', '{r[3]}');")
+                    LocalDb.executeNonQuery(f"INSERT INTO atletas_da_prova(numero_atleta, id_prova, nome, sexo, equipe, percurso) VALUES ({int(r[0])}, {int(equipamento['idprova'])}, '{r[1]}', '{r[2]}', '{r[3]}', {int(r[4])});")
                 
                 return {                
                     'status': 'success',
@@ -66,11 +79,11 @@ class MyTempo:
         db = Database(msg)
         qb = SQLQueryBuilder()
         
-        percursos = qb.Select("idprova, descricaop, km, horalargada, fimlargada, emlargada, tempochecada").From("percurso").Where(f"idprova = {int(idprova)}").Build()
+        percursos = qb.Select("idprova, descricaop, km, horalargada, fimlargada, emlargada, tempochecada, id").From("percurso").Where(f"idprova = {int(idprova)}").Build()
         
         with LocalDatabase(msg) as localdb:
             for data in db.executeQuery(percursos, return_as_object=True):
-                query = f"INSERT INTO percursos (idprova, descricaop, km, horalargada, fimlargada, tempo_em_largada, tempo_chegada) VALUES ({data.idprova}, '{data.descricaop}', '{data.km}', '{data.horalargada}', '{data.fimlargada}', '{data.emlargada}', '{data.tempochecada}');"
+                query = f"INSERT INTO percursos (idprova, descricaop, km, horalargada, fimlargada, tempo_em_largada, tempo_chegada, id_percurso) VALUES ({data.idprova}, '{data.descricaop}', '{data.km}', '{data.horalargada}', '{data.fimlargada}', '{data.emlargada}', '{data.tempochecada}', {data.id});"
                 localdb.executeNonQuery(query)
 
             localdb.executeNonQuery(query)
@@ -188,9 +201,18 @@ class MyTempo:
                     tempos_atletas[numero_atleta]['largada'].append(largada_atleta)
                 if tempo_chegada is not None:
                     tempos_atletas[numero_atleta]['chegada'].append(tempo_chegada)
-                 
-        for t in tempos_atletas.items():
-            print(f"{t[0]}")
+        
+        qb.reset()
+        atletas_percurso = qb.Select("DISTINCT *").From("atletas_da_prova").Join("percursos", "atletas_da_prova.percurso").Where(f"idprova = {equip_dados['idprova']}").Build()
+        res = localdb.executeQuery(atletas_percurso, return_as_object=True)
+        for atl in res:
+            for atleta in tempos_atletas.items():
+                for resultados in atleta[1].items():
+                    if atleta[0] == atl.numero_atleta:
+                        for is_present in resultados[1]:
+                            print(resultados)
+                    # if resultados[0] == 'largada':
+                    #     pass
 
  
 m = MyTempo()
@@ -198,4 +220,4 @@ m = MyTempo()
 # m.emptyGetPercursos()
 # m.getPercursos(163)
 print(MyTempo.MainProcess())
-print(MyTempo.getPercursos('113'))
+# print(m.GetAthletes())
