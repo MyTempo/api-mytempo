@@ -203,18 +203,41 @@ class MyTempo:
                     tempos_atletas[numero_atleta]['chegada'].append(tempo_chegada)
         
         qb.reset()
-        atletas_percurso = qb.Select("DISTINCT *").From("atletas_da_prova").Join("percursos", "atletas_da_prova.percurso").Where(f"idprova = {equip_dados['idprova']}").Build()
-        res = localdb.executeQuery(atletas_percurso, return_as_object=True)
-        for atl in res:
-            for atleta in tempos_atletas.items():
-                for resultados in atleta[1].items():
-                    if atleta[0] == atl.numero_atleta:
-                        for is_present in resultados[1]:
-                            print(resultados)
-                    # if resultados[0] == 'largada':
-                    #     pass
+        atletas_percurso = qb.Select("DISTINCT atletas_da_prova.*, percursos.*").From("atletas_da_prova").Join("percursos", "atletas_da_prova.percurso = percursos.id_percurso").Where(f"idprova = {equip_dados['idprova']}").Where("horalargada IS NOT NULL AND fimlargada IS NOT NULL").Build()
 
- 
+        res = localdb.executeQuery(atletas_percurso, return_as_object=True)
+       
+        t_atletas = {}
+
+        for atl in res:
+            for atleta_id, atleta_data in tempos_atletas.items():
+                if atl.numero_atleta == atleta_id:
+                    if "largada" not in t_atletas.get(atleta_id, {}):
+                        t_atletas[atleta_id] = {"largada": [], "chegada": []}
+                   
+                    horalargada_datetime = datetime.strptime(atl.horalargada, '%H:%M:%S')
+                    larg_total = horalargada_datetime + timedelta(minutes=int(atl.tempo_em_largada))
+
+                    print(atl.horalargada)
+                    print(larg_total.time())
+                    for a_key, a_value in atleta_data.items():
+                        if a_key == "largada":
+                            for larg in a_value:
+                                larg_time = datetime.strptime(larg, '%H:%M:%S.%f').time()
+                                if larg_time >= horalargada_datetime.time() and larg_time <= larg_total.time():
+                                    t_atletas[atleta_id]["largada"].append(larg_time)
+
+                        elif a_key == "chegada":
+                            for cheg in a_value:
+                                if cheg >= horaLargada and cheg >= MinEmchegada:
+                                    t_atletas[atleta_id]["chegada"].append(cheg)
+
+                        
+        for tempos_l in t_atletas.items():
+            print(tempos_l)
+            # print(tempos_l[1].items())
+
+
 m = MyTempo()
 
 # m.emptyGetPercursos()
