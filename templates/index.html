@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='all.min.css') }}">
+
+    <style>
+        .list-group-item .btn {
+            border-radius: 1px;
+        }
+    </style>
+
+    <title>Reader</title>
+</head>
+
+<body>
+    <div id="overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="card">
+ 
+        <h1 class="reader-name text-center"></h1>
+        <div class="comunicacao-status text-end m-2"><span class="comunicando"></span></span></div>
+        <div class="reader-internet-status m-2 text-end verifying"><i class="fa-solid fa-wifi"></i> Verificando
+            aguarde...<div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+        <div class="reader-info text-start">
+            <li class="mb-2 list-group-item">
+                <button type="button" id="admin-config" class="btn admin-config m-3"><i class="fa-solid fa-user"></i> Configurações de administrador</button>
+            </li>
+            <ul class="list-group">
+                <li class="list-group-item">ID equipamento: <span class="id_equip"></span></li>
+                <li class="list-group-item">ID Checkpoint: <span class="id_checkpoint"></span></li>
+                <li class="list-group-item">ID Prova: <span class="id_prova"></span></li>
+                <li class="list-group-item">Associado a prova: <span class="prova_assoc"></span></li>
+                <li class="list-group-item">Fabricante: <span class="fabricante"></span></li>
+              </ul>
+        </div>
+        <div class="leitor-status text-end"></div>
+
+        <div class="row">
+
+        </div>
+    </div>
+
+    <div class="reader-configurations">
+
+    </div>
+
+
+
+    <script src="{{ url_for('static', filename='jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ url_for('static', filename='index.js') }}"></script>
+    <script src="{{ url_for('static', filename='all.min.js') }}"></script>
+
+</body>
+
+</html>
