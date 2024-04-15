@@ -361,14 +361,23 @@ def atletas_chegaram():
     dados = response.json()
     idprova = dados.get('idprova')
     equip = dados.get('equipamento')
-    db = Database()
-    results = db.executeQuery(f"SELECT DISTINCT * FROM tempos WHERE idprova = {idprova} AND idequipamento = {equip}")
-    return jsonify({
-        "status": "success",
-        "message": "",
-        "data": results
-    })
-
+    
+    try:
+        db = Database()
+        results = db.executeQuery(f"SELECT DISTINCT * FROM tempos WHERE idprova = {idprova} AND idequipamento = {equip}")
+        return jsonify({
+            "status": "success",
+            "message": "",
+            "data": results
+        })
+    except Exception as e:
+        print(e)
+        return jsonify({
+            "status": "error",
+            "message": "Verifique sua conexão com a internet",
+            "data": None
+        })
+    
 @app.route("/deletar/arquivo/<string:type_f>/<string:session>", methods=['GET'])
 def deletar_arquivo(type_f, session):
     Files = Intern()

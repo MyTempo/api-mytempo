@@ -9,6 +9,8 @@ import re
 from Upload import *
 from API.models.SQliteDB import *
 import time
+import traceback
+
 
 class ReaderData:
     def __init__(self) -> None:
@@ -167,6 +169,8 @@ class ReaderData:
                 output_file.writelines(lines_without_letters)
         except Exception as e:
             print(f"Ocorreu um erro inesperado: -> {e}")
+
+            
     def getFirstOfAthlete(self):
         self.h = Helpers()
         self.h.created_at = TIME_FORMAT_1 
@@ -488,19 +492,27 @@ class ReaderData:
             with open(most_recent_file_path) as arq:
 
                 rows = arq.read().splitlines()
-
          
                 for row in rows:
-              
-                    self.session = str(row[0:3])
-                    numero_atleta = int(row[23:27])
-                    tempo_atleta = str(row[27:])
-
+                    try:
+                        if len(row) < DEFAULT_TAG_LEN:
+                            self.session = str(row[0:3])
+                            numero_atleta = int(row[8:19])
+                            tempo_atleta = str(row[19:31])
+                        elif len(row) == DEFAULT_TAG_LEN:
+                            self.session = str(row[0:3])
+                            numero_atleta = int(row[23:27])
+                            tempo_atleta = str(row[27:])
+                    except ValueError as e:
+                        print("Erro ao ler o arquivo: valor inválido encontrado ->", e)
+                        continue
+                    
                     self.tempos.setdefault(numero_atleta, []).append(tempo_atleta)
 
         except FileNotFoundError:
             print("Arquivo não encontrado")
         except ValueError:
+                traceback.print_exc() 
                 print("Erro ao ler o arquivo: valor inválido encontrado")
 
         self.tempos = self.tempos
@@ -556,7 +568,6 @@ class ReaderData:
                     tempo TEXT
                 );"""
         cursor.execute(query)
-        print('Tabela criada com sucesso!')
 
         lista = []
         tempos = self.readFiles()
@@ -574,7 +585,6 @@ class ReaderData:
                                """)
         rows = cursor.fetchall()
         cursor.execute('DROP TABLE tempos_first')
-        print("Tabela apagada com sucesso!")
         conn.close()
         for temps in rows:
             self.primeiros_tempos_minerados.append(temps)
@@ -628,8 +638,6 @@ class ReaderData:
         return self.tempos
 
 
-    def processaArquivoInteiro(self):
-        pass    
 
 
 # R = ReaderData()
