@@ -11,7 +11,6 @@ import threading
 import os
 import re
 import time
-import traceback
 
 class MyTempo:
     
@@ -23,7 +22,7 @@ class MyTempo:
         self.is_uploading = False
 
 
-    def setIp(self, ip, port):
+    async def setIp(self, ip, port):
         localdb = LocalDatabase()
         sqlb = SQLQueryBuilder()
         if os.path.exists(SERVER_CONFIG_FILE_PATH):
@@ -43,14 +42,14 @@ class MyTempo:
                             if result['status'] == "success":
                                 MyTempo.setupReaderData(MyTempo())
                             return "Equipamento iniciado e configurado com sucesso!"
-                        except Exception as e: #tratar o erro dps né po
+                        except Exception as e: 
                             print(e)    
 
                         
             except FileNotFoundError as e:
                 print("Falha ao configurar servidor remoto: -> ", e)
 
-    def save_equip(data):
+    async def save_equip(data):
         localdb = LocalDatabase()
         sqlb = SQLQueryBuilder()
         localdb.openOnlyExec()
@@ -75,7 +74,7 @@ class MyTempo:
             )
         localdb.closeOnlyExec()
     
-    def save_server(server):
+    async def save_server(server):
         localdb = LocalDatabase()
         sqlb = SQLQueryBuilder()
         localdb.openOnlyExec()
@@ -114,6 +113,60 @@ class MyTempo:
                 return query
             except Exception as e:
                 print(f"erro ao montar query: -> {e}")
+
+    def mountAthlete_tempos_invalidos(atleta="", tempo="", antena=0, local="", entrada=0, idstaff=9):
+        try:
+            equipamento = r_json(READER_CONFIG_FILE_PATH)
+            tempo_atleta = f"{datetime.now().date()} {tempo}"
+            calculo = sanitizeTimeInput(tempo_atleta)
+            return f"""
+            INSERT INTO tempos_invalidos (idprova, idcheck, idequipamento, numero, tempo, calculo, antena, local, entrada, idstaff)
+            SELECT {equipamento['idprova']}, {equipamento['idcheck']}, '{equipamento["equipamento"]}', {atleta}, '{tempo_atleta}', '{calculo}', {antena}, '{local}', {entrada}, {idstaff}
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM tempos_invalidos
+                WHERE 
+                    idprova = {equipamento['idprova']}
+                    AND idcheck = {equipamento['idcheck']}
+                    AND idequipamento = '{equipamento["equipamento"]}'
+                    AND numero = {atleta}
+                    AND tempo = '{tempo_atleta}'
+                    AND calculo = '{calculo}'
+                    AND antena = {antena}
+                    AND local = '{local}'
+                    AND entrada = {entrada}
+                    AND idstaff = {idstaff}
+            );
+            """
+        except:
+            return None
+        
+    def mountAthlete_tempos_invalidos_To_Upload(atleta="", tempo="", antena=0, local="", entrada=0, idstaff=9):
+        try:
+            equipamento = r_json(READER_CONFIG_FILE_PATH)
+            tempo_atleta = f"{datetime.now().date()} {tempo}"
+            calculo = sanitizeTimeInput(tempo_atleta)
+            return f"""
+            INSERT INTO tempos_invalidos (idprova, idcheck, idequipamento, numero, tempo, calculo, antena, local, entrada, idstaff)
+            SELECT {equipamento['idprova']}, {equipamento['idcheck']}, '{equipamento["equipamento"]}', {atleta}, '{tempo_atleta}', '{calculo}', {antena}, '{local}', {entrada}, {idstaff}
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM tempos_invalidos
+                WHERE 
+                    idprova = {equipamento['idprova']}
+                    AND idcheck = {equipamento['idcheck']}
+                    AND idequipamento = '{equipamento["equipamento"]}'
+                    AND numero = {atleta}
+                    AND tempo = '{tempo_atleta}'
+                    AND calculo = '{calculo}'
+                    AND antena = {antena}
+                    AND local = '{local}'
+                    AND entrada = {entrada}
+                    AND idstaff = {idstaff}
+            );
+            """
+        except:
+            return None
 
     def mountAthleteDataCol(col_name, atleta="", tempo="", antena=0, local="", entrada=0, idstaff=9):
         if os.path.exists(READER_CONFIG_FILE_PATH):
@@ -230,13 +283,13 @@ class MyTempo:
         is_active = MyTempo.sel_sys_settings_fields("bg_process_active")
         while(is_active == 1):
             try:
-                MyTempo.processAthleteTimes()    
+                MyTempo.ProcessAthleteTimes()    
                 print("rodando...")
                 time.sleep(5)
             except Exception as e:
                 print("ocorreu um erro: -> ", e)
                 time.sleep(5)
-                self.processAthleteTimes()
+                self.ProcessAthleteTimes()
 
     def callBackgroundProcess(self):
         if self.is_uploading == False:
@@ -265,7 +318,8 @@ class MyTempo:
         sqlb = SQLQueryBuilder()
 
         atletas_local = localdb.executeQuery(sqlb.Select("*").From("tempos").Build(), return_as_object=True)
-        
+        atletas_invalidos = localdb.executeQuery(sqlb.Select("idprova, idcheck, idequipamento, numero, tempo, calculo, antena, local, entrada, idstaff").From("tempos_invalidos").Build())
+       
         sqlb.reset()
         lista_q = []
 
@@ -283,14 +337,19 @@ class MyTempo:
                 db.OnlyExecute(MyTempo.mountAthleteDataCol(col_name="tempos",atleta=atletas_local[i].numero, tempo=atletas_local[i].tempo, local=atletas_local[i].local, entrada=ENTRY_TYPE))
                 localdb.OnlyExecute(MyTempo.mountAthleteDataCol(col_name="recover", atleta=atletas_local[i].numero, tempo=atletas_local[i].tempo, local=atletas_local[i].local, entrada=ENTRY_TYPE))
         localdb.closeOnlyExec()
+
+        for atleta_ in atletas_invalidos:
+            tempo_atleta = atleta_[4].split(' ')[1]
+            db.OnlyExecute(MyTempo.mountAthlete_tempos_invalidos_To_Upload(atleta=atleta_[3], tempo=tempo_atleta, local=atleta_[7], entrada=ENTRY_TYPE))
+
         db.closeOnlyExec()
 
     def localdbTempos():
         localdb = LocalDatabase()
         sqlb = SQLQueryBuilder()
-
+ 
         atletas_local = localdb.executeQuery(sqlb.Select("*").From("tempos").Build(), return_as_object=True)
-        
+
         sqlb.reset()
         lista_q = []
 
@@ -298,51 +357,73 @@ class MyTempo:
             sqlb.reset()
             atletas_ = sqlb.Select("*").From("recover").Where(f"numero = {atletas_l.numero} AND tempo = '{atletas_l.tempo}'").Build()
             lista_q.append(atletas_)
-
         localdb.openOnlyExec()
+
         for i, query in enumerate(lista_q):
             res = localdb.OnlyExecute(query)
+
             if not res:
                 localdb.OnlyExecute(MyTempo.mountAthleteDataCol(col_name="save_offline",atleta=atletas_local[i].numero, tempo=atletas_local[i].tempo, local=atletas_local[i].local, entrada=ENTRY_TYPE))
-                localdb.OnlyExecute(MyTempo.mountAthleteDataCol(col_name="recover", atleta=atletas_local[i].numero, tempo=atletas_local[i].tempo, local=atletas_local[i].local, entrada=ENTRY_TYPE))
-        localdb.closeOnlyExec()
 
-    def hasUploaded():
-        db = Database(True)
+                localdb.OnlyExecute(MyTempo.mountAthleteDataCol(col_name="recover", atleta=atletas_local[i].numero, tempo=atletas_local[i].tempo, local=atletas_local[i].local, entrada=ENTRY_TYPE))
+
+        localdb.closeOnlyExec()
+    
+    def Mov_to_save():
+        return """
+        INSERT INTO save_offline (idprova, idcheck, idequipamento, numero, tempo, calculo, antena, local, entrada, idstaff)
+        SELECT DISTINCT idprova, idcheck, idequipamento, numero, tempo, calculo, antena, local, entrada, idstaff
+        FROM tempos AS t
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM save_offline AS s
+            WHERE s.numero = t.numero
+            AND s.tempo = t.tempo
+        );
+        """
+    
+    async def hasUploaded():
+        db = Database()
         localdb = LocalDatabase()
         sqlb = SQLQueryBuilder()
         try:
-
             localdb.openOnlyExec()
-            eqp = r_json(READER_CONFIG_FILE_PATH)
-            athletes_ = db.executeQuery(sqlb.Select("numero, tempo").From("tempos").Where(f"idprova={eqp["idprova"]}").Build())
-            in_clause = ', '.join([f"({num}, '{time}')" for num, time in athletes_])
-            sqlb.reset()
-            query = sqlb.Select("*").From("save_offline").Where(f"idprova={eqp['idprova']}").Build()
-            query_with_in_clause = f"{query} AND (numero, tempo) NOT IN ({in_clause})"
-            existing_athletes = localdb.OnlyExecute(query_with_in_clause)
-            db.openOnlyExec()
-            sqlb.reset()
-            for ex_athletes in existing_athletes:
-                db.OnlyExecute(sqlb.Insert("tempos").Set(
-                    idprova=ex_athletes[1],
-                    idcheck=ex_athletes[2],
-                    idequipamento=ex_athletes[3],
-                    numero=ex_athletes[4],
-                    tempo=ex_athletes[5],
-                    calculo=ex_athletes[6],
-                    antena=ex_athletes[7],
-                    local=ex_athletes[8],
-                    entrada=ex_athletes[9],
-                    idstaff=ex_athletes[10]
-                    ).Build())
-            db.closeOnlyExec()
+            try:
+                eqp = r_json(READER_CONFIG_FILE_PATH)
+                athletes_ = db.executeQuery(sqlb.Select("numero, tempo").From("tempos").Where(f"idprova={eqp["idprova"]}").Build())
+                in_clause = ', '.join([f"({num}, '{time}')" for num, time in athletes_])
+                sqlb.reset()
+                query = sqlb.Select("*").From("save_offline").Where(f"idprova={eqp['idprova']}").Build()
+                query_with_in_clause = f"{query} AND (numero, tempo) NOT IN ({in_clause})"
+                existing_athletes = localdb.OnlyExecute(query_with_in_clause)
+           
+                db.openOnlyExec()
+                sqlb.reset()
+                for ex_athletes in existing_athletes:
+                    print(f"Uploading athlete {ex_athletes[4]} - time {ex_athletes[5]}")
+                    db.OnlyExecute(sqlb.Insert("tempos").Set(
+                        idprova=ex_athletes[1],
+                        idcheck=ex_athletes[2],
+                        idequipamento=ex_athletes[3],
+                        numero=ex_athletes[4],
+                        tempo=ex_athletes[5],
+                        calculo=ex_athletes[6],
+                        antena=ex_athletes[7],
+                        local=ex_athletes[8],
+                        entrada=ex_athletes[9],
+                        idstaff=ex_athletes[10]
+                        ).Build())
 
-            localdb.OnlyExecute(sqlb.Delete("save_offline"))
-            localdb.closeOnlyExec()
-            
+                db.closeOnlyExec()
+
+                localdb.OnlyExecute(sqlb.Delete("save_offline").Build())
+            except Exception as e:
+                print("Sem conexão. ->", e)
+                print("Os dados não foram enviados para o banco de dados.")
+            finally:
+                localdb.closeOnlyExec()
         except Exception as e:
-            print(e)
+            print(e) 
 
     def MainProcess() -> None:
         from readfiles import Intern
@@ -534,10 +615,9 @@ class MyTempo:
 
 
         localdb.closeOnlyExec()                
-        # chama o metodo para fazer o upload dos atletas
-        # MyTempo.uploadTempos()
+ 
     
-    def processAthleteTimes() -> None:
+    def ProcessAthleteTimes() -> None:
         
         localdb = LocalDatabase()
         qb = SQLQueryBuilder()
@@ -546,6 +626,7 @@ class MyTempo:
         on_start_athletes = []
         on_end_athletes = []
         end_of_end_point = []
+        invalid_athletes_before_start = []
 
         def insert_athlete(athl_num, timestamp):
             return f"INSERT INTO atletas_tempos (numero_atleta, tempo) VALUES ({athl_num}, '{timestamp}')"
@@ -607,9 +688,10 @@ class MyTempo:
                     GROUP BY 
                         t.numero_atleta;
             """
-
+       
         try:
             localdb.openOnlyExec()
+            localdb.OnlyExecute(qb.Delete("save_offline").Build())
             localdb.OnlyExecute(qb.Delete("atletas_tempos").Build())
             for athl_num, times_list in reader_data.readFiles().items():
       
@@ -622,24 +704,23 @@ class MyTempo:
             queryPercursos = qb.Select("horalargada, fimlargada, tempo_em_largada, tempo_chegada, id_percurso").From("percursos").Where("horalargada IS NOT NULL AND fimlargada IS NOT NULL").Build()
 
             percursos = localdb.OnlyExecute(queryPercursos)
-
+            
             for per in percursos:
                 start_time_str = per[0]
                 start_time_str = ":".join(map(lambda x: x.rjust(2, "0"), start_time_str.split(":")))
                 end_time_str = per[1]
                 end_time_str = ":".join(map(lambda x: x.rjust(2, "0"), end_time_str.split(":")))
                 additional_time = per[3] 
-                start_time = datetime.strptime(start_time_str, '%H:%M:%S')
-                end_time = datetime.strptime(end_time_str, '%H:%M:%S')
+                start_time = datetime.strptime(start_time_str.strip(), '%H:%M:%S')
+                end_time = datetime.strptime(end_time_str.strip(), '%H:%M:%S')
                 
                 additional_time_in_hours, additional_time_in_minutes, additional_time_in_seconds = map(int, additional_time.split(':'))
-
                 additional_time_formatted = timedelta(hours=additional_time_in_hours, minutes=additional_time_in_minutes, seconds=additional_time_in_seconds)
         
                 end_of_end_point = end_time + additional_time_formatted
 
                 hour_end_of_end_point = end_of_end_point.strftime('%H:%M:%S')
-                
+              
                 times_start = set(localdb.OnlyExecute(get_athlete_of_each_percurso_from_start_backup(start_time_str, end_time_str)) + localdb.OnlyExecute(get_athlete_of_each_percurso_from_start(start_time_str, end_time_str)))
                 converted_times_start = list(times_start)
                 on_start_athletes.append(converted_times_start)
@@ -648,32 +729,51 @@ class MyTempo:
                 converted_times_end = list(times_end)
                 on_end_athletes.append(converted_times_end)
 
+                invalid_athletes =  localdb.OnlyExecute(get_invalid_athletes(start_time_str))
+                invalid_athletes_before_start.append(invalid_athletes)
+
             for on_start_athlete in on_start_athletes:
                 for on_start_a in on_start_athlete:
                     if(on_start_a[0] is not None or on_start_a[0] != "NULL" and on_start_a[1] is not None):
                     
                         if(len(localdb.OnlyExecute(verify_if_exists(on_start_a[0], "0")))) < 1:
                             localdb.OnlyExecute(MyTempo.mountAndVerifyIfAthleteDataExists(atleta=on_start_a[0], tempo=on_start_a[1], local="0", entrada=ENTRY_TYPE))
-            
-            
+                            localdb.OnlyExecute(MyTempo.mountAthleteDataCol(col_name="save_offline",atleta=on_start_a[0], tempo=on_start_a[1], local="0", entrada=ENTRY_TYPE))
+
+                
             for on_end_athlete in on_end_athletes:
                 for on_end_a in on_end_athlete:
                     if(on_end_a[0] is not None or on_end_a[0] != "NULL" and on_end_a[1] is not None):
                         
                         if(len(localdb.OnlyExecute(verify_if_exists(on_end_a[0], "1")))) < 1:
                             localdb.OnlyExecute(MyTempo.mountAndVerifyIfAthleteDataExists(atleta=on_end_a[0], tempo=on_end_a[1], local="1", entrada=ENTRY_TYPE))
+                            localdb.OnlyExecute(MyTempo.mountAthleteDataCol(col_name="save_offline",atleta=on_end_a[0], tempo=on_end_a[1], local="1", entrada=ENTRY_TYPE))
+              
+            
+            for invalid_athlete in invalid_athletes_before_start:
+                for inv_athlete in invalid_athlete:
+                    if(inv_athlete[0] is not None or inv_athlete[0] != "NULL" and inv_athlete[1] is not None):
+                        
+                        if(len(localdb.OnlyExecute(verify_if_exists(inv_athlete[0], "1")))) < 1:
+                            localdb.OnlyExecute(MyTempo.mountAthlete_tempos_invalidos(atleta=inv_athlete[0], tempo=inv_athlete[1], local="0", entrada=ENTRY_TYPE))
+            
             try:
                 conj = on_start_athletes[0] + on_end_athletes[0]
                 MyTempo.writeRefined(conj)
             except:
                 pass
-                
+
+            localdb.OnlyExecute(MyTempo.Mov_to_save())    
             localdb.closeOnlyExec()
             MyTempo.autoBackup()
+
             try:
                 MyTempo.uploadTempos()
+
             except Exception as e:
-                print(e)
+                import traceback
+                traceback.print_exc()
+                print("Sem conexão com a internet para subir os tempos.")
                 MyTempo.localdbTempos()
             
 
@@ -687,7 +787,7 @@ class MyTempo:
             except Exception as e:
                 print(e)
             finally:
-                MyTempo.processAthleteTimes()
+                MyTempo.ProcessAthleteTimes()
 
     def emptyRecoverTable(self):
         localdb = LocalDatabase()
@@ -705,7 +805,9 @@ class MyTempo:
         localdb = LocalDatabase()
         return localdb.executeNonQuery("DELETE FROM atletas_tempos_backup")
     
-    def setupReaderData(self):        
+    def setupReaderData(self):  
+        from system import System
+
         localdb = LocalDatabase()
         qb = SQLQueryBuilder()
         localdb.openOnlyExec()
@@ -719,10 +821,19 @@ class MyTempo:
 
         
         localdb.OnlyExecute(qb.Delete("recover").Build())
-        localdb.OnlyExecute(qb.Delete("percursos").Build())
         localdb.OnlyExecute(qb.Delete("tempos").Build())
-        localdb.OnlyExecute(qb.Delete("atletas_da_prova").Build())
+        
+        internet = System.checkInternet_connection()
+
+        if(internet['status'] != 'error'):
+            localdb.OnlyExecute(qb.Delete("percursos").Build())
+            localdb.OnlyExecute(qb.Delete("atletas_da_prova").Build())
+            
+        localdb.OnlyExecute(qb.Delete("tempos_invalidos").Build())
+        
+
         localdb.OnlyExecute(qb.Delete("atletas_tempos_backup").Where(f"time_stamp <= datetime('now', '-{localdb.OnlyExecute("SELECT bkp_delete_in_days FROM system_settings")[0][0]} day')").Build())
+        print(qb.Delete("atletas_tempos_backup").Where(f"time_stamp <= datetime('now', '-{localdb.OnlyExecute("SELECT bkp_delete_in_days FROM system_settings")[0][0]} day')").Build())
         localdb.closeOnlyExec()
         self.getPercursos(idprova)
         self.GetAthletes()
@@ -770,8 +881,9 @@ class MyTempo:
         while pendrive_status == 1:
             MyTempo.pendriveGetData()
             time.sleep(5)
+            
     
-    def readerStartup():
+    async def readerStartup():
         localdb = LocalDatabase()
         sqlb = SQLQueryBuilder()
         localdb.openOnlyExec()
@@ -803,9 +915,11 @@ class MyTempo:
 # m = MyTempo()
 
 
-MyTempo.hasUploaded()
+# MyTempo.ProcessAthleteTimes()
 
+# print(MyTempo.mountAthlete_tempos_invalidos(atleta=176, tempo="10:24:10.556", local="1", entrada=ENTRY_TYPE))
 
+ 
 # m.setupReaderData()z
 
 # # print(m.)[=[]]

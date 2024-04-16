@@ -5,6 +5,7 @@ from API.config.config import *
 from system import Process
 import socket
 import threading
+import asyncio
 
 def get_local_ip_addr():
     try:
@@ -46,11 +47,11 @@ if __name__ == '__main__':
         set_config()
 
         mt = MyTempo()
-        MyTempo.readerStartup()
-        MyTempo.save_server(data)
-        mt.setIp(data["server_ip"], data['port'])
+        asyncio.run(MyTempo.readerStartup())
+        asyncio.run(MyTempo.save_server(data))
+        asyncio.run(mt.setIp(data["server_ip"], data['port']))
         MyTempo.setupReaderData(MyTempo())
-        
+        asyncio.run(MyTempo.hasUploaded())
         api = threading.Thread(target=start_process)
         
         pendrive_checker = threading.Thread(target=MyTempo.verifyIfHasPendrive)

@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 from API.config.config import *
 import pytz
 import random
-import requests
 
 class Helpers:
     def __init__(self) -> None:
