@@ -32,7 +32,11 @@ def status_equip():
 
 @app.route('/admin/view/')
 def admin_config():
-    return render_template('admin.html')
+
+    data = r_json(CONFIG_FILE_PATH)
+    print(data)
+
+    return render_template('admin.html', data=data)
 
 @app.route('/dados_equipamento', methods=['GET'])
 def equip_data():
@@ -479,7 +483,7 @@ def restart_reader_api():
             'retornomsg': 'Processo reiniciado com sucesso!'
         })
 
-@app.route('/restart', methods=['GET'])
+@app.route('/turnoff', methods=['GET'])
 def restart_application():
     os.system("taskkill /f /im python.exe")
     
@@ -494,3 +498,65 @@ def restart_application():
         return jsonify({'status': 'success', 'message': 'Servidor Flask reiniciado com sucesso'}), 200
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
+    
+
+@app.route("/configurar/pendrive/", methods=['GET'])
+def config_pendrive():
+    action = request.args.get("action")
+    msg = ""
+    if(action):
+        if(action == "active"):
+            update_json_value(CONFIG_FILE_PATH, "pendrive_identifier_loop", "active")
+            msg = "Verificação de pendrive ativada com sucesso!"
+        else:
+            update_json_value(CONFIG_FILE_PATH, "pendrive_identifier_loop", "deactive")
+            msg = "Verificação de pendrive desativada com sucesso!"
+
+        return jsonify({
+            'status': 'success',
+            'message': msg,
+            'erro': 0,
+            'retornomsg': msg
+        })
+    else:
+        return jsonify({
+            'status': 'error',
+            'message': "ação indisponível",
+            'erro': 0,
+            'retornomsg': 'ação indisponível'
+        })
+
+@app.route("/configurar/bg_process", methods=['GET'])
+def bg_process():
+    from MyTempo import MyTempo
+    action = request.args.get("action")
+    if(action):
+        if(action == "active"):
+            MyTempo.set_config_field('bg_process_active', 1)
+            msg = "Processo em segundo plano ativado com sucesso!"
+        else:
+            MyTempo.set_config_field('bg_process_active', 0)
+            msg = "Processo em segundo plano desativado com sucesso!"
+
+        return jsonify({
+            'status': 'success',
+            'message': msg,
+            'erro': 0,
+            'retornomsg': msg
+        })
+    else:
+        return jsonify({
+            'status': 'error',
+            'message': "ação indisponível",
+            'erro': 0,
+            'retornomsg': 'ação indisponível'
+        })
+    
+
+@app.route("/configurar/desligar", methods=['GET'])
+def desligar_tudo():
+    os.system("shutdown /s /t 5")
+
+@app.route("/configurar/reiniciar", methods=['GET'])
+def reiniciar():
+    os.system("shutdown /r /t 5")

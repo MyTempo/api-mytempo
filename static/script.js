@@ -8,7 +8,24 @@ class Page {
     }
 }
 
-
+function startCountdown(duration, elementId) {
+    var count = duration;
+    var countdownElement = document.getElementById(elementId); 
+  
+    var interval = setInterval(function() {
+      if (count <= 0) {
+        clearInterval(interval);
+      } else {
+        countdownElement.textContent = count; 
+        count--;
+      }
+    }, 1000);
+  }
+  
+  // Exemplo de uso:
+  startCountdown(10, 'contador'); // Contador de 10 segundos no elemento com ID 'contador'
+  
+  
 function showToast(type="success", message="", duration=3000) {
     let bodyPage = document.body;
 

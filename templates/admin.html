@@ -1,12 +1,14 @@
 <div class="container">
+  <div class="alert alert-warning mt-4" role="alert">
+   <strong>IMPORTANTE: <i class="fa-solid fa-triangle-exclamation" style="color: rgb(255, 255, 29);"></i></strong> <span>As Configurações abaixo devem ser manipuladas com <strong>CAUTELA</strong>. Caso contrário afetará o comportamento do equipamento e sistema na operação.</span>
+  </div>
   <li class="mb-2 mt-3 list-group-item">
     <button type="button" id="voltar" class="btn voltar"><i class="fa-solid fa-arrow-left"></i> Voltar</button>
   </li>
     <div class="row">
-      <!-- Configurações do Equipamento -->
       <div class="col-md-12 mb-4 mt-4">
         <h2>Configurações do Equipamento</h2>
-        <form>
+        <form id="mudar-equip">
           <div class="form-group">
             <label for="nome-equipamento">Nome do Equipamento:</label>
             <input type="text" class="form-control" id="nome-equipamento" placeholder="Digite o nome do equipamento">
@@ -21,7 +23,10 @@
       </div>
       <!-- Sidebar -->
       <div class="col-md-6 mb-4">
-        <h2>READER API</h2>
+        <div class="alert alert-dark" role="alert">
+          <h2 class="text-center">READER API</h2>
+        </div>
+        
         <ul class="list-group">
           <li class="list-group-item btn btn-success" id="iniciar-reader-api">Inicar API Reader</li>
           <li class="list-group-item btn btn-danger" id="parar-reader-api">Parar API Reader</li>
@@ -30,12 +35,22 @@
       </div>
       
       <div class="col-md-6 mb-4">
-        <h2>API MYTEMPO</h2>
-        <!-- <ul class="list-group">
-            <li class="list-group-item btn btn-success" id="iniciar-mytempo-api">Inicar API Reader</li>
-            <li class="list-group-item btn btn-danger" id="parar-mytempo-api">Parar API Reader</li>
-            <li class="list-group-item btn btn-secondary" id="reiniciar-mytempo-api">Reiniciar API Reader</li>
-          </ul> -->
+    
+        <div class="alert alert-primary" role="alert">
+          <h2 class="text-center">API MYTEMPO</h2>
+        </div>
+        <ul class="list-group">
+            <li class="list-group-item btn btn-success {% if data.pendrive_identifier_loop == 'active' %}active{% endif %}" id="procurar-pendrive">Sempre Procurar Pendrive</li>
+            <li class="list-group-item btn btn-danger" id="desativa-processo-bg">Desativar processo em segundo plano(<i class="fa-solid fa-triangle-exclamation"></i>)</li>
+            <li class="list-group-item btn btn-secondary" id="encerrar-todos-processos">Encerrar todos os processos (<i class="fa-solid fa-triangle-exclamation"></i>)</li>
+          </ul>
       </div>
-      
+      <div class="col-md-12 mb-4">
+
+        <ul class="list-group">
+            <li class="list-group-item btn btn-danger" id="desligar-equipamento">Desligar Totalmente o Equipamento (<i class="fa-solid fa-triangle-exclamation"></i>)</li>
+            <li class="list-group-item btn btn-secondary" id="reinicar-equipamento">Reiniciar Equipamento (<i class="fa-solid fa-triangle-exclamation"></i>)</li>
+         
+            
+        </ul>
   </div>

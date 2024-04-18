@@ -30,7 +30,7 @@ $(document).ready(function () {
                     type: 'GET',
                     url: '/configurar/view/',
                     success: function (response) {
-                        $(".reader-configurations").html(response)
+                        $(".reader-configurations").hide().html(response).fadeIn('slow'); 
                         Page.hideOverlay()
                     },
                     error: function (xhr, status, error) {
@@ -48,8 +48,8 @@ $(document).ready(function () {
             type: 'GET',
             url: '/admin/view/',
             success: function (response) {
-                $(".reader-configurations").html(response)
-                console.log(response)
+                $(".reader-configurations").hide().html(response).fadeIn('slow'); 
+
             },
 
             error: function (xhr, status, error) {
@@ -131,7 +131,8 @@ $(document).ready(function () {
             type: 'GET',
             url: '/actions/view/',
             success: function (response) {
-                $(".reader-configurations").html(response)
+                $(".reader-configurations").hide().html(response).fadeIn('slow'); 
+
             },
 
             error: function (xhr, status, error) {
@@ -621,5 +622,116 @@ $(document).ready(function () {
     $(document).on("click", "#voltar", function () {
         loadSysActions()
     })
+
+    $(document).on("click", "#procurar-pendrive", function () {
+
+        let action = ''
+        if ($(this).hasClass("active")) {
+            $(this).removeClass("active")
+            action = "deactive"
+        } else {
+            $(this).addClass("active")
+            action = "active"
+        }
+        $.ajax({
+            type: 'GET',
+            url: '/configurar/pendrive/?action=' + action,
+            contentType: 'application/json',
+            success: function (response) {
+                showToast(response.status, response.message, 3000);
+            },
+            error: function (xhr, status, error) {
+                console.error('Erro na solicitação AJAX:', error);
+            }
+        });
+    })
+
+    $(document).on("submit", "#mudar-equip", function (e) {
+        e.preventDefault();
+        $(".info-loader").html(`
+        <div class="d-flex justify-content-center">
+        <div class="spinner-border" role="status">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+      `);
+        let nome_equipamento = $("#nome-equipamento").val();
+        let dados = {
+            "nome_equipamento": nome_equipamento
+        }
+        console.log(dados)
+        $.ajax({
+            type: 'POST',
+            url: '/configurar/equipamento/',
+            contentType: 'application/json',
+            data: JSON.stringify(dados),
+            success: function (response) {
+                if (response.status == "success") {
+                    showToast(response.status, response.message, 3000);
+                    $(".info-loader").html(`
+                        <div class="alert alert-success" role="alert">
+                            ${response.message}
+                        </div>
+                    `);
+                    setTimeout(function(){
+                        location.reload();
+                    }, 3000);
+                }
+                else if (response.status == "error") {
+                    showToast(response.status, response.message, 3000)
+                    $(".info-loader").html(`
+                <div class="alert alert-danger" role="alert">
+                    ${response.message}: Verifique se o equipamento existe no sistema.
+                </div>
+                `)
+                }
+    
+            },
+            error: function (xhr, status, error) {
+                console.error('Erro na solicitação AJAX:', error);
+            }
+    
+        });
+    })
+
+    $(document).on('click', "#encerrar-todos-processos", () => {
+        $.ajax({
+            type: 'GET',
+            url: '/turnoff',
+            error: function (xhr, status, error) {
+                console.error('Erro na solicitação AJAX:', error);
+            }
+        });
+        showToast("success", "Todos os processos foram finalizados", 3000)
+
+    })
+
+    $(document).on('click', "#reinicar-equipamento", () => {
+        $.ajax({
+            type: 'GET',
+            url: '/configurar/reiniciar',
+            error: function (xhr, status, error) {
+                console.error('Erro na solicitação AJAX:', error);
+            }
+        });
+        showToast("success", "Seu equipamento irá reiniciar em <strong id='tempo_'></strong>", 5000)
+        startCountdown(5, "tempo_")
+
+    })
+    $(document).on('click', "#desligar-equipamento", () => {
+        $.ajax({
+            type: 'GET',
+            url: '/configurar/desligar',
+            error: function (xhr, status, error) {
+                console.error('Erro na solicitação AJAX:', error);
+            }
+        });
+        showToast("success", "Seu equipamento irá desligar em <strong id='tempo_'></strong>", 5000)
+        startCountdown(5, "tempo_")
+
+    })
+
 });
+
+
 

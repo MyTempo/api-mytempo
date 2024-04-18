@@ -50,7 +50,6 @@ if __name__ == '__main__':
         asyncio.run(MyTempo.readerStartup())
         asyncio.run(MyTempo.save_server(data))
         asyncio.run(mt.setIp(data["server_ip"], data['port']))
-        MyTempo.setupReaderData(MyTempo())
         asyncio.run(MyTempo.hasUploaded())
         api = threading.Thread(target=start_process)
         

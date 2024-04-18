@@ -415,8 +415,8 @@ class MyTempo:
                         ).Build())
 
                 db.closeOnlyExec()
-
-                localdb.OnlyExecute(sqlb.Delete("save_offline").Build())
+                if(System.checkInternet_connection()['status'] != "error"):
+                    localdb.OnlyExecute(sqlb.Delete("save_offline").Build())
             except Exception as e:
                 print("Sem conexão. ->", e)
                 print("Os dados não foram enviados para o banco de dados.")
@@ -831,9 +831,8 @@ class MyTempo:
             
         localdb.OnlyExecute(qb.Delete("tempos_invalidos").Build())
         
-
         localdb.OnlyExecute(qb.Delete("atletas_tempos_backup").Where(f"time_stamp <= datetime('now', '-{localdb.OnlyExecute("SELECT bkp_delete_in_days FROM system_settings")[0][0]} day')").Build())
-        print(qb.Delete("atletas_tempos_backup").Where(f"time_stamp <= datetime('now', '-{localdb.OnlyExecute("SELECT bkp_delete_in_days FROM system_settings")[0][0]} day')").Build())
+       
         localdb.closeOnlyExec()
         self.getPercursos(idprova)
         self.GetAthletes()
@@ -874,11 +873,11 @@ class MyTempo:
             print(f"Ocorreu um erro: {e}")
 
     def verifyIfHasPendrive():
-        pendrive_status = MyTempo.sel_sys_settings_fields("pendrive_identifier_loop_status")
-        if(pendrive_status == 0):
+        pendrive_status = r_json(CONFIG_FILE_PATH)
+        if(pendrive_status["pendrive_identifier_loop"] == "deactive"):
             MyTempo.pendriveGetData()
             return
-        while pendrive_status == 1:
+        while pendrive_status["pendrive_identifier_loop"] == "active":
             MyTempo.pendriveGetData()
             time.sleep(5)
             
