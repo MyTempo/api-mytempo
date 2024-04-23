@@ -114,6 +114,34 @@ class MyTempo:
             except Exception as e:
                 print(f"erro ao montar query: -> {e}")
 
+    def mountAthlete_tempos(atleta="", tempo="", antena=0, local="", entrada=0, idstaff=9):
+        try:
+            equipamento = r_json(READER_CONFIG_FILE_PATH)
+            tempo_atleta = f"{datetime.now().date()} {tempo}"
+            calculo = sanitizeTimeInput(tempo_atleta)
+            return f"""
+            INSERT INTO tempos (idprova, idcheck, idequipamento, numero, tempo, calculo, antena, local, entrada, idstaff)
+            SELECT {equipamento['idprova']}, {equipamento['idcheck']}, '{equipamento["equipamento"]}', {atleta}, '{tempo_atleta}', '{calculo}', {antena}, '{local}', {entrada}, {idstaff}
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM tempos
+                WHERE 
+                    idprova = {equipamento['idprova']}
+                    AND idcheck = {equipamento['idcheck']}
+                    AND idequipamento = '{equipamento["equipamento"]}'
+                    AND numero = {atleta}
+                    AND tempo = '{tempo_atleta}'
+                    AND calculo = '{calculo}'
+                    AND antena = {antena}
+                    AND local = '{local}'
+                    AND entrada = {entrada}
+                    AND idstaff = {idstaff}
+            );
+            """
+        except Exception as e:
+            print(f"Erro ao montar query para a tabela 'tempos': {e}")
+            return None
+
     def mountAthlete_tempos_invalidos(atleta="", tempo="", antena=0, local="", entrada=0, idstaff=9):
         try:
             equipamento = r_json(READER_CONFIG_FILE_PATH)
@@ -330,19 +358,24 @@ class MyTempo:
             lista_q.append(atletas_)
 
         localdb.openOnlyExec()
-        db.openOnlyExec()
-        for i, query in enumerate(lista_q):
-            res = localdb.OnlyExecute(query)
-            if not res:
-                db.OnlyExecute(MyTempo.mountAthleteDataCol(col_name="tempos",atleta=atletas_local[i].numero, tempo=atletas_local[i].tempo, local=atletas_local[i].local, entrada=ENTRY_TYPE))
-                localdb.OnlyExecute(MyTempo.mountAthleteDataCol(col_name="recover", atleta=atletas_local[i].numero, tempo=atletas_local[i].tempo, local=atletas_local[i].local, entrada=ENTRY_TYPE))
-        localdb.closeOnlyExec()
+        try:
+            db.openOnlyExec()
+            for i, query in enumerate(lista_q):
+                res = localdb.OnlyExecute(query)
+                if not res:
+                    db.OnlyExecute(MyTempo.mountAthleteDataCol(col_name="tempos",atleta=atletas_local[i].numero, tempo=atletas_local[i].tempo, local=atletas_local[i].local, entrada=ENTRY_TYPE))
+                    localdb.OnlyExecute(MyTempo.mountAthleteDataCol(col_name="recover", atleta=atletas_local[i].numero, tempo=atletas_local[i].tempo, local=atletas_local[i].local, entrada=ENTRY_TYPE))
+            localdb.closeOnlyExec()
 
-        for atleta_ in atletas_invalidos:
-            tempo_atleta = atleta_[4].split(' ')[1]
-            db.OnlyExecute(MyTempo.mountAthlete_tempos_invalidos_To_Upload(atleta=atleta_[3], tempo=tempo_atleta, local=atleta_[7], entrada=ENTRY_TYPE))
+            for atleta_ in atletas_invalidos:
+                tempo_atleta = atleta_[4].split(' ')[1]
+                db.OnlyExecute(MyTempo.mountAthlete_tempos_invalidos_To_Upload(atleta=atleta_[3], tempo=tempo_atleta, local=atleta_[7], entrada=ENTRY_TYPE))
 
-        db.closeOnlyExec()
+            db.closeOnlyExec()
+        except mysql.connector.Error as err:
+            print("Não foi possível Enviar os tempos. Verifique sua conexão com a internet: spec -> ", err)
+            pass
+
 
     def localdbTempos():
         localdb = LocalDatabase()
@@ -616,7 +649,13 @@ class MyTempo:
 
         localdb.closeOnlyExec()                
  
-    
+    def checkIfAthleteDataExists(col_name, atleta, tempo):
+        try:
+            check_query = f"SELECT COUNT(*) FROM {col_name} WHERE numero = {atleta} AND tempo = '{tempo}'"
+            return check_query
+        except Exception as e:
+            print(f"Erro ao montar query de verificação: {e}")    
+
     def ProcessAthleteTimes() -> None:
         
         localdb = LocalDatabase()
@@ -687,22 +726,42 @@ class MyTempo:
                         t.tempo < "{before_of}"
                     GROUP BY 
                         t.numero_atleta;
-            """
-       
+                    """ 
+        
+        def get_athletes_from_percurso_type():
+            return """
+                   SELECT 
+                        t.numero_atleta, 
+                        MIN(t.tempo) AS primeiro_tempo
+                    FROM 
+                        atletas_tempos AS t
+                    JOIN 
+                        atletas_da_prova AS ap ON ap.numero_atleta = t.numero_atleta
+      
+                    GROUP BY 
+                        t.numero_atleta;
+                    """
+
+
+     
         try:
-            localdb.openOnlyExec()
+            localdb.openOnlyExec()            
             localdb.OnlyExecute(qb.Delete("save_offline").Build())
             localdb.OnlyExecute(qb.Delete("atletas_tempos").Build())
             for athl_num, times_list in reader_data.readFiles().items():
-      
                 for athl_time in times_list:
                     if(len(athl_time) > 12):
                         continue
                     else:
                         localdb.OnlyExecute(insert_athlete(athl_num, athl_time))
             
+            equip_info = r_json(READER_CONFIG_FILE_PATH)
+            if equip_info["identificacao"] == "2":
+                athletes_per = localdb.OnlyExecute(get_athletes_from_percurso_type())
+                for athl_per in athletes_per:
+                    localdb.OnlyExecute(MyTempo.mountAthlete_tempos(atleta=athl_per[0], tempo=athl_per[1], local="1", entrada=ENTRY_TYPE))
+                        
             queryPercursos = qb.Select("horalargada, fimlargada, tempo_em_largada, tempo_chegada, id_percurso").From("percursos").Where("horalargada IS NOT NULL AND fimlargada IS NOT NULL").Build()
-
             percursos = localdb.OnlyExecute(queryPercursos)
             
             for per in percursos:
@@ -772,7 +831,6 @@ class MyTempo:
 
             except Exception as e:
                 import traceback
-                traceback.print_exc()
                 print("Sem conexão com a internet para subir os tempos.")
                 MyTempo.localdbTempos()
             
@@ -904,11 +962,11 @@ class MyTempo:
         try:
             process = psutil.Process(pid)
             process.terminate()
-            print(f"Processo com PID {pid} interrompido com sucesso.")
+            print(f"Processo {pid} interrompido com sucesso.")
         except psutil.NoSuchProcess:
-            print(f"Não há nenhum processo com PID {pid} em execução.")
+            print(f"Não há nenhum processo {pid} em execução.")
         except psutil.AccessDenied:
-            print(f"Permissão negada para interromper o processo com PID {pid}.")
+            print(f"Permissão negada para interromper o processo {pid}.")
 
 
 # m = MyTempo()

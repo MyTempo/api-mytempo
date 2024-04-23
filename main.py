@@ -488,12 +488,12 @@ def restart_application():
     os.system("taskkill /f /im python.exe")
     
     time.sleep(1)
-    # Obtém o diretório atual do script
+
     current_directory = os.path.dirname(os.path.realpath(__file__))
-    # Volta um diretório
+   
     os.chdir(os.path.join(current_directory, ".."))
     try:
-        # Executa o script start.py
+       
         os.execl('python', 'start.py')
         return jsonify({'status': 'success', 'message': 'Servidor Flask reiniciado com sucesso'}), 200
     except Exception as e:
@@ -560,3 +560,4 @@ def desligar_tudo():
 @app.route("/configurar/reiniciar", methods=['GET'])
 def reiniciar():
     os.system("shutdown /r /t 5")
+
