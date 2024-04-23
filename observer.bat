@@ -1,8 +1,10 @@
 @echo off
 
-call C:\Users\MY\sistema\api-main\Scripts\activate.bat
+set "user_dir=%USERPROFILE%"
 
-cd C:\Users\MY\sistema\api-main\API
+call %user_dir%\sistema\api-main\Scripts\activate.bat
+
+cd %user_dir%\sistema\api-main\API
 
 :loop
 tasklist /fi "imagename eq python.exe" | find "run.py" > nul
