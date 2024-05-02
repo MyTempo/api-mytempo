@@ -1,16 +1,17 @@
-import subprocess
+import requests
 
-def get_localtunnel_url(port):
-    try:
-        result = subprocess.run(['lt', '--port', str(port)], capture_output=True, text=True, check=True)
-        url = result.stdout.strip().split()[-1]
-        return url
-    except subprocess.CalledProcessError as e:
-        print("Erro ao executar o comando lt:", e)
-    except Exception as e:
-        print("Ocorreu um erro:", e)
+# URL da sua rota
+url = 'http://localhost:3000/leitura/'
 
-port = 3000
+data = {'tag': 'exemplo'}
 
-url = get_localtunnel_url(port)
-print("URL do LocalTunnel:", url)
+
+response = requests.post(url, data=data)
+
+# Verificar a resposta
+if response.status_code == 200:
+    print("Requisição bem-sucedida!")
+    print("Resposta do servidor:")
+    print(response.json())
+else:
+    print("Erro:", response.status_code)

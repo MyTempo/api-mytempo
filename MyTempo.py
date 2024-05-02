@@ -317,7 +317,7 @@ class MyTempo:
             except Exception as e:
                 print("ocorreu um erro: -> ", e)
                 time.sleep(5)
-                self.ProcessAthleteTimes()
+                MyTempo.ProcessAthleteTimes()
 
     def callBackgroundProcess(self):
         if self.is_uploading == False:
@@ -414,7 +414,7 @@ class MyTempo:
             AND s.tempo = t.tempo
         );
         """
-    
+
     async def hasUploaded():
         db = Database()
         localdb = LocalDatabase()
@@ -458,196 +458,196 @@ class MyTempo:
         except Exception as e:
             print(e) 
 
-    def MainProcess() -> None:
-        from readfiles import Intern
+    # def MainProcess() -> None:
+    #     from readfiles import Intern
         
-        tempos = {}
+    #     tempos = {}
         
-        if os.path.exists(READER_CONFIG_FILE_PATH):
-            equip_dados = r_json(READER_CONFIG_FILE_PATH)
+    #     if os.path.exists(READER_CONFIG_FILE_PATH):
+    #         equip_dados = r_json(READER_CONFIG_FILE_PATH)
         
-        localdb = LocalDatabase()
-        qb = SQLQueryBuilder()
-        helpers = Helpers()
-        helpers.created_at = TIME_FORMAT_1 
-        horaLargadaOficial = []
-        tempoMinimoChegada = []
-        horaLargada_ = []
-        tempoChegada = []
+    #     localdb = LocalDatabase()
+    #     qb = SQLQueryBuilder()
+    #     helpers = Helpers()
+    #     helpers.created_at = TIME_FORMAT_1 
+    #     horaLargadaOficial = []
+    #     tempoMinimoChegada = []
+    #     horaLargada_ = []
+    #     tempoChegada = []
 
-        queryPercursos = qb.Select("horalargada, fimlargada, tempo_em_largada, tempo_chegada").From("percursos").Where("horalargada IS NOT NULL AND fimlargada IS NOT NULL").Build()
-        percursosTempos = localdb.executeQuery(queryPercursos, return_as_object=True)
+    #     queryPercursos = qb.Select("horalargada, fimlargada, tempo_em_largada, tempo_chegada").From("percursos").Where("horalargada IS NOT NULL AND fimlargada IS NOT NULL").Build()
+    #     percursosTempos = localdb.executeQuery(queryPercursos, return_as_object=True)
 
-        # pega trata o tempo de cada percurso, formatando os tempos e somando os adicionais
-        #   |
-        #  \/       
-        for percursoI in percursosTempos:
-            if percursoI and percursoI.horalargada and percursoI.fimlargada:
-                tempo_str = percursoI.horalargada
-                # chegada_str = percursoI.fimlargada
+    #     # pega trata o tempo de cada percurso, formatando os tempos e somando os adicionais
+    #     #   |
+    #     #  \/       
+    #     for percursoI in percursosTempos:
+    #         if percursoI and percursoI.horalargada and percursoI.fimlargada:
+    #             tempo_str = percursoI.horalargada
+    #             # chegada_str = percursoI.fimlargada
 
-                if percursoI.tempo_em_largada is not None and isinstance(percursoI.tempo_em_largada, str) and percursoI.tempo_em_largada.isdigit():
-                    try:
-                        if percursoI.fimlargada is not None and isinstance(percursoI.fimlargada, str):
-                            chegada_datetime = datetime.strptime(percursoI.fimlargada, '%H:%M:%S')
-                            duracao_chegada = datetime.strptime(percursoI.tempo_chegada, '%H:%M:%S') - datetime.min
-                            chegada_formatada = chegada_datetime + duracao_chegada
-                            tempoMinimoChegada.append(chegada_formatada.strftime('%H:%M:%S'))
+    #             if percursoI.tempo_em_largada is not None and isinstance(percursoI.tempo_em_largada, str) and percursoI.tempo_em_largada.isdigit():
+    #                 try:
+    #                     if percursoI.fimlargada is not None and isinstance(percursoI.fimlargada, str):
+    #                         chegada_datetime = datetime.strptime(percursoI.fimlargada, '%H:%M:%S')
+    #                         duracao_chegada = datetime.strptime(percursoI.tempo_chegada, '%H:%M:%S') - datetime.min
+    #                         chegada_formatada = chegada_datetime + duracao_chegada
+    #                         tempoMinimoChegada.append(chegada_formatada.strftime('%H:%M:%S'))
 
-                            if percursoI.tempo_chegada is not None and isinstance(percursoI.tempo_chegada, str):
-                                tempoChegada.append(percursoI.tempo_chegada)
-                    except ValueError as e:
-                        pass
-                    try:
-                        minutos_adicionais = int(percursoI.tempo_em_largada)
-                        tempo_datetime = datetime.strptime(tempo_str, '%H:%M:%S') + timedelta(minutes=minutos_adicionais)
-                        horaLargada_.append(tempo_str)
-                        horaLargadaOficial.append(tempo_datetime.strftime('%H:%M:%S'))
-                    except ValueError as e:
-                        pass
-                else:
-                    print("Valor inválido para tempo_em_largada.")
-            else:
-                print("Valor de horalargada ausente ou inválido.")
+    #                         if percursoI.tempo_chegada is not None and isinstance(percursoI.tempo_chegada, str):
+    #                             tempoChegada.append(percursoI.tempo_chegada)
+    #                 except ValueError as e:
+    #                     pass
+    #                 try:
+    #                     minutos_adicionais = int(percursoI.tempo_em_largada)
+    #                     tempo_datetime = datetime.strptime(tempo_str, '%H:%M:%S') + timedelta(minutes=minutos_adicionais)
+    #                     horaLargada_.append(tempo_str)
+    #                     horaLargadaOficial.append(tempo_datetime.strftime('%H:%M:%S'))
+    #                 except ValueError as e:
+    #                     pass
+    #             else:
+    #                 print("Valor inválido para tempo_em_largada.")
+    #         else:
+    #             print("Valor de horalargada ausente ou inválido.")
     
-        r_file = Intern()
-        most_recent_file_path = r_file.getMostRecentFileModified(PATH_BRUTE_DATA)
-        r_data = ReaderData()
-        r_data.getCompressedData()
-        with open(most_recent_file_path, 'r') as file:
-            lines = file.readlines()
+    #     r_file = Intern()
+    #     most_recent_file_path = r_file.getMostRecentFileModified(PATH_BRUTE_DATA)
+    #     r_data = ReaderData()
+    #     r_data.getCompressedData()
+    #     with open(most_recent_file_path, 'r') as file:
+    #         lines = file.readlines()
         
-        unique_lines = list(dict.fromkeys(lines))
+    #     unique_lines = list(dict.fromkeys(lines))
         
-        lines_without_letters = [line for line in unique_lines if not re.search('[a-zA-Z]', line)]
+    #     lines_without_letters = [line for line in unique_lines if not re.search('[a-zA-Z]', line)]
 
-        for row in lines_without_letters:
-            # session = str(row[0:3])
-            numero_atleta = int(row[23:27])
-            tempo_atleta = str(row[27:])
-            tempos.setdefault(numero_atleta, []).append(tempo_atleta)
+    #     for row in lines_without_letters:
+    #         # session = str(row[0:3])
+    #         numero_atleta = int(row[23:27])
+    #         tempo_atleta = str(row[27:])
+    #         tempos.setdefault(numero_atleta, []).append(tempo_atleta)
 
-        tempos_atletas = {}
+    #     tempos_atletas = {}
 
         
-        for numero_atleta, lista_tempos in tempos.items():
-            if len(lista_tempos) > 0:
-                print(f"atleta {numero_atleta} ainda não possui tempos válidos em relação aos horarios de largada e chegada!")
+    #     for numero_atleta, lista_tempos in tempos.items():
+    #         if len(lista_tempos) > 0:
+    #             print(f"atleta {numero_atleta} ainda não possui tempos válidos em relação aos horarios de largada e chegada!")
         
-            tempos_atletas.setdefault(numero_atleta, {'largada': [], 'chegada': []})
+    #         tempos_atletas.setdefault(numero_atleta, {'largada': [], 'chegada': []})
             
-            # iterar com os atletas sobre cada percurso (ficar em observação de como se comporta)
-            #  |
-            # \/
+    #         # iterar com os atletas sobre cada percurso (ficar em observação de como se comporta)
+    #         #  |
+    #         # \/
 
-            for horaLargada, MinEmchegada, horaLargada_ofc in zip(horaLargadaOficial, tempoMinimoChegada, horaLargada_):
-                largada_atleta = None
-                tempo_chegada = None
-                for tempo in lista_tempos:
-                    # print(horaLargada, MinEmchegada, horaLargada_ofc)
-                        # 16:05:00     16:15:00      16:00:00
-                    try:
-                        # print(f"{tempo} {horaLargada}")
-                        if tempo >= horaLargada_ofc and tempo <= horaLargada:
-                            largada_atleta = tempo
-                            print(f"largada do atleta no percurso de {horaLargada_ofc}")
-                        if tempo >= horaLargada and tempo >= MinEmchegada:
-                            print(f"chegada do atleta no percurso de {MinEmchegada}")
-                            tempo_chegada = tempo
-                    except ValueError:
-                        print(f"O tempo {tempo} não está no formato correto e será ignorado.")
+    #         for horaLargada, MinEmchegada, horaLargada_ofc in zip(horaLargadaOficial, tempoMinimoChegada, horaLargada_):
+    #             largada_atleta = None
+    #             tempo_chegada = None
+    #             for tempo in lista_tempos:
+    #                 # print(horaLargada, MinEmchegada, horaLargada_ofc)
+    #                     # 16:05:00     16:15:00      16:00:00
+    #                 try:
+    #                     # print(f"{tempo} {horaLargada}")
+    #                     if tempo >= horaLargada_ofc and tempo <= horaLargada:
+    #                         largada_atleta = tempo
+    #                         print(f"largada do atleta no percurso de {horaLargada_ofc}")
+    #                     if tempo >= horaLargada and tempo >= MinEmchegada:
+    #                         print(f"chegada do atleta no percurso de {MinEmchegada}")
+    #                         tempo_chegada = tempo
+    #                 except ValueError:
+    #                     print(f"O tempo {tempo} não está no formato correto e será ignorado.")
 
-                if largada_atleta is not None:
-                    tempos_atletas[numero_atleta]['largada'].append(largada_atleta)
-                if tempo_chegada is not None:
-                    tempos_atletas[numero_atleta]['chegada'].append(tempo_chegada)
+    #             if largada_atleta is not None:
+    #                 tempos_atletas[numero_atleta]['largada'].append(largada_atleta)
+    #             if tempo_chegada is not None:
+    #                 tempos_atletas[numero_atleta]['chegada'].append(tempo_chegada)
         
-        qb.reset()
-        atletas_percurso = qb.Select("DISTINCT atletas_da_prova.*, percursos.*").From("atletas_da_prova").Join("percursos", "atletas_da_prova.percurso = percursos.id_percurso").Where(f"idprova = {equip_dados['idprova']}").Where("horalargada IS NOT NULL AND fimlargada IS NOT NULL").Build()
+    #     qb.reset()
+    #     atletas_percurso = qb.Select("DISTINCT atletas_da_prova.*, percursos.*").From("atletas_da_prova").Join("percursos", "atletas_da_prova.percurso = percursos.id_percurso").Where(f"idprova = {equip_dados['idprova']}").Where("horalargada IS NOT NULL AND fimlargada IS NOT NULL").Build()
         
-        res = localdb.executeQuery(atletas_percurso, return_as_object=True)
+    #     res = localdb.executeQuery(atletas_percurso, return_as_object=True)
         
-        t_atletas = {}
+    #     t_atletas = {}
 
-        # itera sobre cada atleta para saber em qual percurso ele é pertencente
+    #     # itera sobre cada atleta para saber em qual percurso ele é pertencente
 
-        for atl in res:  
-            for atleta_id, atleta_data in tempos_atletas.items():
+    #     for atl in res:  
+    #         for atleta_id, atleta_data in tempos_atletas.items():
                
-                if atl.numero_atleta == atleta_id:
-                    if "largada" not in t_atletas.get(atleta_id, {}):
-                        t_atletas[atleta_id] = {"largada": [], "chegada": []}
-                    horalargada_datetime = datetime.strptime(atl.horalargada, '%H:%M:%S')
-                    larg_total = horalargada_datetime + timedelta(minutes=int(atl.tempo_em_largada))
+    #             if atl.numero_atleta == atleta_id:
+    #                 if "largada" not in t_atletas.get(atleta_id, {}):
+    #                     t_atletas[atleta_id] = {"largada": [], "chegada": []}
+    #                 horalargada_datetime = datetime.strptime(atl.horalargada, '%H:%M:%S')
+    #                 larg_total = horalargada_datetime + timedelta(minutes=int(atl.tempo_em_largada))
                     
-                    chegada_ = datetime.strptime(atl.fimlargada, '%H:%M:%S')
-                    duracao_chegada_total = datetime.strptime(atl.tempo_chegada, '%H:%M:%S') - datetime.min
-                    chegada_total = chegada_ + duracao_chegada_total
-                    chegada_total = chegada_total.time()
+    #                 chegada_ = datetime.strptime(atl.fimlargada, '%H:%M:%S')
+    #                 duracao_chegada_total = datetime.strptime(atl.tempo_chegada, '%H:%M:%S') - datetime.min
+    #                 chegada_total = chegada_ + duracao_chegada_total
+    #                 chegada_total = chegada_total.time()
 
-                    for a_key, a_value in atleta_data.items():
-                        if a_key == "largada":
-                            for larg in a_value:
+    #                 for a_key, a_value in atleta_data.items():
+    #                     if a_key == "largada":
+    #                         for larg in a_value:
                          
-                                larg_trunc = larg.split('.')[0]  
-                                larg_time = datetime.strptime(larg_trunc, '%H:%M:%S').time()
+    #                             larg_trunc = larg.split('.')[0]  
+    #                             larg_time = datetime.strptime(larg_trunc, '%H:%M:%S').time()
                         
-                                if larg_time >= horalargada_datetime.time() and larg_time <= larg_total.time():
+    #                             if larg_time >= horalargada_datetime.time() and larg_time <= larg_total.time():
                                     
-                                    t_atletas[atleta_id]["largada"].append(larg)
+    #                                 t_atletas[atleta_id]["largada"].append(larg)
 
-                        elif a_key == "chegada":
-                            for cheg in a_value:
-                                if cheg >= horaLargada and cheg >= str(chegada_total):
-                                    t_atletas[atleta_id]["chegada"].append(cheg)
+    #                     elif a_key == "chegada":
+    #                         for cheg in a_value:
+    #                             if cheg >= horaLargada and cheg >= str(chegada_total):
+    #                                 t_atletas[atleta_id]["chegada"].append(cheg)
                                     
                  
-        tempos_atletas_agrupados = {}
+    #     tempos_atletas_agrupados = {}
 
-        # agrupa os atletas e separa os tempos por largada e chegada, baseado na lógica de maior e menor tempo né aff
+    #     # agrupa os atletas e separa os tempos por largada e chegada, baseado na lógica de maior e menor tempo né aff
 
-        for atleta_id, tempos in t_atletas.items():
-            largada = []
-            chegada = []
+    #     for atleta_id, tempos in t_atletas.items():
+    #         largada = []
+    #         chegada = []
 
-            if 'largada' in tempos:
-                largada = sorted(set(tempos['largada']), key=lambda x: tempos['largada'].index(x))
-            if 'chegada' in tempos:
-                chegada = sorted(set(tempos['chegada']), key=lambda x: tempos['chegada'].index(x))
+    #         if 'largada' in tempos:
+    #             largada = sorted(set(tempos['largada']), key=lambda x: tempos['largada'].index(x))
+    #         if 'chegada' in tempos:
+    #             chegada = sorted(set(tempos['chegada']), key=lambda x: tempos['chegada'].index(x))
 
-            tempos_atletas_agrupados[atleta_id] = {'largada': largada, 'chegada': chegada}
+    #         tempos_atletas_agrupados[atleta_id] = {'largada': largada, 'chegada': chegada}
 
-        qb.reset()
-        atletas = qb.Select("numero").From("tempos").Where(f"idprova = {equip_dados['idprova']}").Build()
-        r_atletas = localdb.executeQuery(atletas, return_as_object=True)
+    #     qb.reset()
+    #     atletas = qb.Select("numero").From("tempos").Where(f"idprova = {equip_dados['idprova']}").Build()
+    #     r_atletas = localdb.executeQuery(atletas, return_as_object=True)
 
-        atletas_existentes = set([atl_in_base.numero for atl_in_base in r_atletas])
+    #     atletas_existentes = set([atl_in_base.numero for atl_in_base in r_atletas])
         
-        localdb.openOnlyExec()
-        for ta in tempos_atletas_agrupados.items():
-            atleta_id = ta[0]
-            tempos_atleta = ta[1]
+    #     localdb.openOnlyExec()
+    #     for ta in tempos_atletas_agrupados.items():
+    #         atleta_id = ta[0]
+    #         tempos_atleta = ta[1]
             
-            if atleta_id in atletas_existentes:
-                print(f"{atleta_id} já existente na base")
-                continue
+    #         if atleta_id in atletas_existentes:
+    #             print(f"{atleta_id} já existente na base")
+    #             continue
                 
-            #itera sobre as listas preparadas e prepara para o processamento
-            for tipo_tempo, lista_tempos in tempos_atleta.items():
+    #         #itera sobre as listas preparadas e prepara para o processamento
+    #         for tipo_tempo, lista_tempos in tempos_atleta.items():
                 
-                if tipo_tempo == "largada":
+    #             if tipo_tempo == "largada":
 
-                    if lista_tempos:
-                        if(len(lista_tempos) > 0):
-                            localdb.OnlyExecute(MyTempo.mountAthleteData(atleta=atleta_id, tempo=lista_tempos[0], local="0", entrada=ENTRY_TYPE))
-                elif tipo_tempo == "chegada":
-                    if lista_tempos:
-                        if(len(lista_tempos) > 0):
-                           localdb.OnlyExecute(MyTempo.mountAthleteData(atleta=atleta_id, tempo=lista_tempos[0], local="1", entrada=ENTRY_TYPE))
-                        print(atleta_id)
+    #                 if lista_tempos:
+    #                     if(len(lista_tempos) > 0):
+    #                         localdb.OnlyExecute(MyTempo.mountAthleteData(atleta=atleta_id, tempo=lista_tempos[0], local="0", entrada=ENTRY_TYPE))
+    #             elif tipo_tempo == "chegada":
+    #                 if lista_tempos:
+    #                     if(len(lista_tempos) > 0):
+    #                        localdb.OnlyExecute(MyTempo.mountAthleteData(atleta=atleta_id, tempo=lista_tempos[0], local="1", entrada=ENTRY_TYPE))
+    #                     print(atleta_id)
 
 
-        localdb.closeOnlyExec()                
+    #     localdb.closeOnlyExec()                
  
     def checkIfAthleteDataExists(col_name, atleta, tempo):
         try:
@@ -741,11 +741,9 @@ class MyTempo:
                     GROUP BY 
                         t.numero_atleta;
                     """
-
-
-     
         try:
-            localdb.openOnlyExec()            
+            localdb.openOnlyExec() if not localdb.conn_ else None
+                     
             localdb.OnlyExecute(qb.Delete("save_offline").Build())
             localdb.OnlyExecute(qb.Delete("atletas_tempos").Build())
             for athl_num, times_list in reader_data.readFiles().items():
@@ -805,8 +803,19 @@ class MyTempo:
                     if(on_end_a[0] is not None or on_end_a[0] != "NULL" and on_end_a[1] is not None):
                         
                         if(len(localdb.OnlyExecute(verify_if_exists(on_end_a[0], "1")))) < 1:
-                            localdb.OnlyExecute(MyTempo.mountAndVerifyIfAthleteDataExists(atleta=on_end_a[0], tempo=on_end_a[1], local="1", entrada=ENTRY_TYPE))
-                            localdb.OnlyExecute(MyTempo.mountAthleteDataCol(col_name="save_offline",atleta=on_end_a[0], tempo=on_end_a[1], local="1", entrada=ENTRY_TYPE))
+                            localdb.OnlyExecute(MyTempo.mountAndVerifyIfAthleteDataExists(
+                                                                                            atleta=on_end_a[0], 
+                                                                                            tempo=on_end_a[1], 
+                                                                                            local="1", 
+                                                                                            entrada=ENTRY_TYPE))
+                            # salva na base sqlite 
+                            localdb.OnlyExecute(MyTempo.mountAthleteDataCol(
+                                                                            col_name="save_offline",
+                                                                            atleta=on_end_a[0], 
+                                                                            tempo=on_end_a[1], 
+                                                                            local="1", 
+                                                                            entrada=ENTRY_TYPE
+                                                                            ))
               
             
             for invalid_athlete in invalid_athletes_before_start:
@@ -814,13 +823,18 @@ class MyTempo:
                     if(inv_athlete[0] is not None or inv_athlete[0] != "NULL" and inv_athlete[1] is not None):
                         
                         if(len(localdb.OnlyExecute(verify_if_exists(inv_athlete[0], "1")))) < 1:
-                            localdb.OnlyExecute(MyTempo.mountAthlete_tempos_invalidos(atleta=inv_athlete[0], tempo=inv_athlete[1], local="0", entrada=ENTRY_TYPE))
+                            localdb.OnlyExecute(MyTempo.mountAthlete_tempos_invalidos(
+                                                                                        atleta=inv_athlete[0], 
+                                                                                        tempo=inv_athlete[1], 
+                                                                                        local="0", 
+                                                                                        entrada=ENTRY_TYPE
+                                                                                    ))
             
             try:
                 conj = on_start_athletes[0] + on_end_athletes[0]
                 MyTempo.writeRefined(conj)
             except:
-                pass
+                localdb.closeOnlyExec()
 
             localdb.OnlyExecute(MyTempo.Mov_to_save())    
             localdb.closeOnlyExec()
@@ -875,8 +889,6 @@ class MyTempo:
             idprova = equip_dados['idprova']
         else:
             idprova = localdb.OnlyExecute(qb.Select("idprova").From("equip_data").Build())[0][0]
-            
-
         
         localdb.OnlyExecute(qb.Delete("recover").Build())
         localdb.OnlyExecute(qb.Delete("tempos").Build())
@@ -888,7 +900,6 @@ class MyTempo:
             localdb.OnlyExecute(qb.Delete("atletas_da_prova").Build())
             
         localdb.OnlyExecute(qb.Delete("tempos_invalidos").Build())
-        
         localdb.OnlyExecute(qb.Delete("atletas_tempos_backup").Where(f"time_stamp <= datetime('now', '-{localdb.OnlyExecute("SELECT bkp_delete_in_days FROM system_settings")[0][0]} day')").Build())
        
         localdb.closeOnlyExec()
@@ -938,7 +949,6 @@ class MyTempo:
         while pendrive_status["pendrive_identifier_loop"] == "active":
             MyTempo.pendriveGetData()
             time.sleep(5)
-            
     
     async def readerStartup():
         localdb = LocalDatabase()
@@ -957,7 +967,6 @@ class MyTempo:
             ).Build())
         localdb.closeOnlyExec()
 
-        
     def stop_process_by_pid(pid):
         try:
             process = psutil.Process(pid)
@@ -968,6 +977,54 @@ class MyTempo:
         except psutil.AccessDenied:
             print(f"Permissão negada para interromper o processo {pid}.")
 
+
+    def getValidAthletes():
+        return """
+                SELECT COUNT(*) AS total_linhas
+                FROM atletas_tempos AS t
+                JOIN atletas_da_prova AS ap ON ap.numero_atleta = t.numero_atleta;
+        """
+    
+    def getUploadedAthletesFromLocal():
+        return """
+            SELECT COUNT(*) FROM tempos
+        """
+    
+    def getAthletesOnLargada():
+        return """
+            SELECT COUNT(*) FROM tempos WHERE local = '0'
+        """       
+    def getAthletesOnChegada():
+        return """
+           SELECT COUNT(*) FROM tempos WHERE local = '1' 
+        """       
+    def getAthletesOnPercurso():
+        return """
+           SELECT COUNT(*) FROM tempos WHERE local = '2' 
+        """   
+    
+    def getStatistics():
+        localdb = LocalDatabase()
+        statistics = dict()
+        localdb.openOnlyExec()
+        statistics["valid_athletes"] = localdb.OnlyExecute(MyTempo.getValidAthletes())[0][0]
+        statistics["uploaded_athletes"] = localdb.OnlyExecute(MyTempo.getUploadedAthletesFromLocal())[0][0]
+        statistics["athletes_on_largada"] = localdb.OnlyExecute(MyTempo.getAthletesOnLargada())[0][0]
+        statistics["athletes_on_chegada"] = localdb.OnlyExecute(MyTempo.getAthletesOnChegada())[0][0]
+        statistics["athletes_on_percurso"] = localdb.OnlyExecute(MyTempo.getAthletesOnPercurso())[0][0]
+        localdb.closeOnlyExec()
+        return statistics
+
+
+
+
+#  SELECT t.numero_atleta FROM 
+#                         atletas_tempos AS t
+#                     JOIN 
+#                         atletas_da_prova AS ap ON ap.numero_atleta = t.numero_atleta
+      
+#                     GROUP BY 
+#                         t.numero_atleta;
 
 # m = MyTempo()
 

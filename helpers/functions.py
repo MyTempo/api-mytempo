@@ -2,7 +2,7 @@ import json
 import subprocess
 import sys
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import sqlite3
 
 def w_json(path, dados):
@@ -90,3 +90,13 @@ def get_sys_db_schemas(database):
         print(command[0])
 
     conn.close()
+
+
+
+def convert_time_from_microseconds(tag_timestamp):
+        micros = int(tag_timestamp)
+        seconds = micros / 1e6
+        dt_object = datetime.fromtimestamp(seconds, tz=timezone.utc)
+
+        time_str = dt_object.strftime('%H:%M:%S.%f')[:-3] 
+        return time_str

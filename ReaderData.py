@@ -519,6 +519,7 @@ class ReaderData:
         return self.tempos
 
     def getLastTime(self):
+        # pega o ultimo tempo de cada atleta 0
         try:
             conn = sqlite3.connect(DB_PATH)
             cursor = conn.cursor()
@@ -550,7 +551,6 @@ class ReaderData:
                                 """)
             rows = cursor.fetchall()
             cursor.execute('DROP TABLE tempos_first')
-            print("Tabela apagada com sucesso!")
             conn.close()
             for temps in rows:
                 self.ultimos_tempos_minerados.append(temps)
@@ -636,14 +636,65 @@ class ReaderData:
 
         self.tempos = self.tempos
         return self.tempos
+    
 
 
 
+    # 0000-0000-0078-9000-0000-0543:1714486413306677:1 
+    def handleRequest(content):
+        if content != None or content != "":
+            data_parts = content.split(":")
+            tag_code = data_parts[0]
+            tag_timestamp = data_parts[1]
+            # antenna_id = data_parts[2];
+            timestamp = convert_time_from_microseconds(tag_timestamp)
+            print(timestamp)
+            tag = tag_code.replace('-', "")
+            return tag + timestamp
 
-# R = ReaderData()
+class TagFile:
+    def __init__(self) -> None:
+        self.fileName = self.generateTagFileName("brute")
+        self.filePath = os.path.join(PATH_BRUTE_DATA, self.fileName)
 
-# tempos = R.getCompressedDataAll()
-# for numero_atleta, lista_tempos in tempos.items():
-#     # print(f"atleta {numero_atleta}: {lista_tempos}")
-#     for n in lista_tempos:
-#         print(f"Tempo do atleta {numero_atleta}: {n}")
+    def generateTagFileName(self, type_t):
+       
+        if(type_t == "brute"):
+            file_name = f'MyTempo-Bruto-Sess-{Helpers.generateRandomNum_int(3)} T-{TIME_FORMAT_2}.txt'
+        elif(type_t == "refined"):
+            file_name = f'MyTempo-Ref-Sess-{Helpers.generateRandomNum_int(3)} T-{TIME_FORMAT_2}.txt'
+        else:
+            file_name = type_t
+        print(file_name)
+        return file_name
+    
+
+    def makeFile(self):
+        try:
+            with open(self.filePath, 'r') as arquivo:
+                print(f'O arquivo "{self.filePath}" já existe.')
+                return
+        except FileNotFoundError:
+           
+            with open(self.filePath, 'w') as arquivo:
+                print(f'O arquivo "{self.filePath}" foi criado.')
+
+    # uncomplete            
+    def saveOnFile(self, tag_info, type_f="brute"):
+        if os.path.exists(self.filePath):
+            with open(self.filePath, "a") as file:
+                for tag in tag_info: 
+                    file.write(tag)
+                    file.write("\n")
+
+    def saveThisOnFile(self, tag_info):
+        if os.path.exists(self.filePath):
+            with open(self.filePath, "a") as file:
+                file.write(tag_info)
+                file.write("\n")
+                file.close()
+        else:
+            print("Caminho: ", self.filePath, " não existe")
+
+
+

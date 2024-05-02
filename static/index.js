@@ -30,7 +30,7 @@ $(document).ready(function () {
                     type: 'GET',
                     url: '/configurar/view/',
                     success: function (response) {
-                        $(".reader-configurations").hide().html(response).fadeIn('slow'); 
+                        $(".reader-configurations").hide().html(response).fadeIn('slow');
                         Page.hideOverlay()
                     },
                     error: function (xhr, status, error) {
@@ -48,7 +48,7 @@ $(document).ready(function () {
             type: 'GET',
             url: '/admin/view/',
             success: function (response) {
-                $(".reader-configurations").hide().html(response).fadeIn('slow'); 
+                $(".reader-configurations").hide().html(response).fadeIn('slow');
 
             },
 
@@ -56,7 +56,7 @@ $(document).ready(function () {
                 console.error('Erro na solicitação AJAX:', error);
             }
         })
-    } 
+    }
     function verifyStatus() {
         $(".reader-internet-status").show()
 
@@ -70,6 +70,7 @@ $(document).ready(function () {
                     loadSysActions();
                 }
                 else {
+                    loadAdminView();
                     $(".reader-internet-status").html("<i class='fa-solid fa-wifi'></i> Sem conexão com a internet").removeClass("connected").addClass("disconnected")
                     showToast(response.status, "Sem conexão com a internet", duration = 3000)
                 }
@@ -105,7 +106,7 @@ $(document).ready(function () {
                             ${response.message}
                         </div>
                     `);
-                    setTimeout(function(){
+                    setTimeout(function () {
                         location.reload();
                     }, 3000);
                 }
@@ -131,8 +132,18 @@ $(document).ready(function () {
             type: 'GET',
             url: '/actions/view/',
             success: function (response) {
-                $(".reader-configurations").hide().html(response).fadeIn('slow'); 
+                $(".reader-configurations").hide().html(response).fadeIn('slow');
+                $.ajax({
+                    type: 'GET',
+                    url: '/statistics/view/',
+                    success: function (response) {
+                        $(".statistics").hide().html(response).fadeIn('slow');
+                    },
 
+                    error: function (xhr, status, error) {
+                        console.error('Erro na solicitação AJAX:', error);
+                    }
+                })
             },
 
             error: function (xhr, status, error) {
@@ -260,7 +271,7 @@ $(document).ready(function () {
 
 
     $(document).on("click", "#iniciar-leitura", function () {
-        
+
         $.ajax({
             type: 'POST',
             url: '/status/leitura/',
@@ -289,7 +300,7 @@ $(document).ready(function () {
         });
         $(this).prop('disabled', true);
         $("#leitura-desativa").prop('disabled', false);
-        
+
     })
 
     setInterval(function () {
@@ -318,9 +329,15 @@ $(document).ready(function () {
                         newRow.append(tagCell);
                         newRow.append(countCell);
                         newRow.append(lastTimestamp);
-
                         tableBody.append(newRow);
+
                     });
+                    try {
+                        let lastIndexCell = $(".info-table tr:last-child td:first-child").text();
+                        $(".tags-qtd").text(lastIndexCell);
+                    } catch (error) {
+                        
+                    }
 
                 }
                 else {
@@ -335,7 +352,7 @@ $(document).ready(function () {
             }
 
         });
-    }, 5000);
+    }, 1000);
 
     function atualizaEquipamento() {
         $.ajax({
@@ -540,7 +557,7 @@ $(document).ready(function () {
         });
     });
 
-    $(document).on('click', ".apagar-todos-brutos", function() {
+    $(document).on('click', ".apagar-todos-brutos", function () {
         $.ajax({
             type: 'GET',
             url: `/deletar/tudo/bruto`,
@@ -554,7 +571,7 @@ $(document).ready(function () {
         });
     });
 
-    $(document).on('click', ".apagar-todos-refinados", function() {
+    $(document).on('click', ".apagar-todos-refinados", function () {
         $.ajax({
             type: 'GET',
             url: `/deletar/tudo/refinado`,
@@ -568,13 +585,13 @@ $(document).ready(function () {
         });
     });
 
-    $(document).on("click", ".esconder", function(e) {
+    $(document).on("click", ".esconder", function (e) {
         $(".mostrar-atletas").removeClass("esconder")
         $(".mostrar-atletas-card").addClass("d-none");
         $(".mostrar-atletas").text("Mostrar atletas enviados")
     });
 
-    $(document).on('click', "#admin-config", function() {
+    $(document).on('click', "#admin-config", function () {
         loadAdminView()
     });
 
@@ -673,7 +690,7 @@ $(document).ready(function () {
                             ${response.message}
                         </div>
                     `);
-                    setTimeout(function(){
+                    setTimeout(function () {
                         location.reload();
                     }, 3000);
                 }
@@ -685,12 +702,12 @@ $(document).ready(function () {
                 </div>
                 `)
                 }
-    
+
             },
             error: function (xhr, status, error) {
                 console.error('Erro na solicitação AJAX:', error);
             }
-    
+
         });
     })
 
@@ -715,7 +732,9 @@ $(document).ready(function () {
             }
         });
         showToast("success", "Seu equipamento irá reiniciar em <strong id='tempo_'></strong>", 5000)
-        startCountdown(5, "tempo_")
+        if ($("tempo_").length != 0) {
+            startCountdown(5, "tempo_")
+        }
 
     })
     $(document).on('click', "#desligar-equipamento", () => {
@@ -726,11 +745,39 @@ $(document).ready(function () {
                 console.error('Erro na solicitação AJAX:', error);
             }
         });
+
         showToast("success", "Seu equipamento irá desligar em <strong id='tempo_'></strong>", 5000)
-        startCountdown(5, "tempo_")
+        if ($("tempo_").length != 0) {
+            startCountdown(5, "tempo_")
+        }
+
 
     })
 
+    function updateStatistics() {
+        $.ajax({
+            type: 'GET',
+            url: '/statistics/',
+            contentType: 'application/json',
+
+            success: function (response) {
+                console.log(response)
+                if (response.status == "success") {
+                    $(".atletas-validos").html(response.validos)
+                    $(".atletas-enviados").html(response.enviados)
+                    $(".largada").html(response.largada)
+                    $(".chegada").html(response.chegada)
+                    $(".percurso").html(response.percurso)
+                   
+                }
+
+            },
+            error: function (xhr, status, error) {
+                console.error('Erro na solicitação AJAX:', error);
+            }
+        });
+    }
+    setInterval(updateStatistics, 5000);
 });
 
 

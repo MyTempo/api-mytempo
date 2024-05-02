@@ -8,6 +8,8 @@ from readfiles import Intern
 from API.helpers.helpers import Helpers
 from ReaderData import *
 
+tagFile = TagFile()
+tagFile.makeFile()
 
 app = Flask(__name__)
 CORS(app)  # Configurações do CORS
@@ -25,6 +27,9 @@ def template_configurar():
 def template_acoes():
     return render_template('actions.html')
 
+@app.route("/statistics/view/")
+def statistics():
+    return render_template("statistics.html")
 
 @app.route('/status', methods=['GET'])
 def status_equip():
@@ -561,3 +566,35 @@ def desligar_tudo():
 def reiniciar():
     os.system("shutdown /r /t 5")
 
+
+@app.route('/statistics/', methods=['GET'])
+def get_statistics():
+    from MyTempo import MyTempo
+
+    try:
+        statistics = MyTempo.getStatistics()
+    except Exception as e:
+        print(e)
+
+    return jsonify({
+            'status': 'success',
+            'erro': 0,
+            "validos": statistics["valid_athletes"],
+            "enviados": statistics['uploaded_athletes'],
+            "largada": statistics["athletes_on_largada"],
+            "percurso": statistics['athletes_on_percurso'],
+            "chegada": statistics['athletes_on_chegada']
+    })
+
+@app.route("/leitura/", methods=["POST"])
+def leitura():
+
+    if request.method == "POST":
+        data = request.json["tag"]
+        tag = ReaderData.handleRequest(data)
+        print(tag)
+        tagFile.saveThisOnFile(tag_info=tag)
+        return jsonify({
+            "tag": tag,
+            'msg': "foi caraio"
+        })

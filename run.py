@@ -45,6 +45,7 @@ if __name__ == '__main__':
         w_json_if_not_exists(CONFIG_FILE_PATH, SYS_CONFIG)
         
         set_config()
+        
 
         mt = MyTempo()
         asyncio.run(MyTempo.readerStartup())

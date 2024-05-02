@@ -35,7 +35,11 @@ class Helpers:
     def generateRandomNum(qtd):
         random_nums = [str(random.random()) for _ in range(qtd)]
         return ', '.join(random_nums)
-    
+
+    @staticmethod
+    def generateRandomNum_int(qtd):
+        return ''.join(str(random.randint(1, 9)) for _ in range(qtd))
+
     def FormatDeviceParams(deviceParams, hComm=""):
         formatted_data = {
             "hComm": hComm,

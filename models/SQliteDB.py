@@ -12,6 +12,7 @@ class LocalDatabase:
         self.db_file = DB_PATH
         self.messages = messages
         self.results = []
+        self.conn_ = False
         self.info = {
             "status": "",
             "connection": "",
@@ -32,6 +33,7 @@ class LocalDatabase:
             self.conn = sqlite3.connect(self.db_file)
             if self.messages:
                 print("Conexão estabelecida com sucesso.")
+                self.conn_ = True
         except Exception as e:
             if self.messages:
                 print("Erro ao conectar ao banco de dados:", e)
@@ -111,11 +113,13 @@ class LocalDatabase:
             self.conn.close()
             if self.messages:
                 print("Conexão fechada.")
-
+                self.conn_ = False
     def openOnlyExec(self):
+        self.conn_ = True
         self.connect()
         self.cursor = self.conn.cursor()
     
     def closeOnlyExec(self):
+        self.conn_ = False
         self.conn.commit()
         self.closeConnection()
